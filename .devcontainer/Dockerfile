@@ -3,10 +3,11 @@
 # Licensed under the MIT License. See https://go.microsoft.com/fwlink/?linkid=2090316 for license information.
 #-------------------------------------------------------------------------------------------------------------
 
-FROM golang:1
+# FROM golang:1
 
-# Avoid warnings by switching to noninteractive
-ENV DEBIAN_FRONTEND=noninteractive
+FROM amazonlinux:latest
+
+USER root
 
 # This Dockerfile adds a non-root user with sudo access. Use the "remoteUser"
 # property in devcontainer.json to use it. On Linux, the container user's GID/UIDs
@@ -16,12 +17,38 @@ ARG USERNAME=vscode
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
 
+RUN yum -y install curl zip aws-cli gzip tar git sudo gcc make
+
+# Create a non-root user to use if preferred - see https://aka.ms/vscode-remote/containers/non-root-user.
+RUN groupadd --gid $USER_GID $USERNAME \
+    && useradd -s /bin/bash --uid $USER_UID --gid $USER_GID -m $USERNAME \
+    # [Optional] Add sudo support
+    && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
+    && chmod 0440 /etc/sudoers.d/$USERNAME
+
+# Configure golang
+WORKDIR ~
+
+ENV GOLANG_VERSION 1.14.4 
+ARG GO_ZIP=go$GOLANG_VERSION.linux-amd64.tar.gz
+ARG GOLANG_URL=https://storage.googleapis.com/golang/$GO_ZIP
+
+RUN curl -O $GOLANG_URL
+RUN gzip $GO_ZIP
+RUN tar -xvf $GO_ZIP
+RUN mv go /usr/local
+
+ENV GOPATH $HOME/workspace
+ENV PATH $PATH:/usr/local/go/bin:$GOPATH/bin
+RUN mkdir $HOME/workspace
+
+# Avoid warnings by switching to noninteractive
+ENV DEBIAN_FRONTEND=noninteractive
+
 # Configure apt, install packages and tools
-RUN apt-get update \
-    && apt-get -y install --no-install-recommends apt-utils dialog 2>&1 \
-    #
+RUN yum -y install \
     # Verify git, process tools, lsb-release (common in install instructions for CLIs) installed
-    && apt-get -y install zsh git openssh-client less iproute2 procps lsb-release \
+    zsh git openssh-client less iproute2 procps lsb-release \
     #
     # Build Go tools w/module support
     && mkdir -p /tmp/gotools \
@@ -63,17 +90,9 @@ RUN apt-get update \
     # Install golangci-lint
     && curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b /usr/local/bin 2>&1 \
     #
-    # Create a non-root user to use if preferred - see https://aka.ms/vscode-remote/containers/non-root-user.
-    && groupadd --gid $USER_GID $USERNAME \
-    && useradd -s /bin/bash --uid $USER_UID --gid $USER_GID -m $USERNAME \
-    # [Optional] Add sudo support
-    && apt-get install -y sudo \
-    && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
-    && chmod 0440 /etc/sudoers.d/$USERNAME \
-    #
     # Clean up
-    && apt-get autoremove -y \
-    && apt-get clean -y \
+    && yum autoremove -y \
+    && yum clean packages \
     && rm -rf /var/lib/apt/lists/* /tmp/gotools
 
 # Update this to "on" or "off" as appropriate
