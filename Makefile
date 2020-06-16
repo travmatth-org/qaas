@@ -7,6 +7,6 @@ build:
 	@go build -o $(APPLICATION) $(MAIN)
 
 clean:
-	@rm $(APPLICATION)
+	@rm -f $(APPLICATION)
 
 .PHONY: default build clean
