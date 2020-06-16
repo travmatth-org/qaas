@@ -20,3 +20,6 @@
 # Dependency directories (remove the comment below to include it)
 # vendor/
 faas
+
+# vscode remote debugger artifacts
+**/__debug_bin
