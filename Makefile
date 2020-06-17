@@ -1,5 +1,5 @@
-MAIN := cmd/faas/main.go
 APPLICATION := faas
+MAIN := cmd/faas/main.go
 
 default: build
 
@@ -9,4 +9,15 @@ build:
 clean:
 	@rm -f $(APPLICATION)
 
-.PHONY: default build clean
+lint:
+	@golint -set_exit_status ./...
+
+vet:
+	@go vet
+
+test:
+	@go test -v ./...
+
+check: lint vet test
+
+.PHONY: default build clean lint vet test check
