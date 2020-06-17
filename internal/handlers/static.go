@@ -3,6 +3,9 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"os"
+	"path"
+	"strings"
 
 	"github.com/Travmatth/faas/internal/config"
 )
@@ -12,16 +15,29 @@ type statusResponseWriter struct {
 	status int
 }
 
+func Handle404(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("Error"))
+}
+
 func Static(c *config.Config) http.HandlerFunc {
 	dir := http.Dir(c.GetStaticRoot())
-	h := http.FileServer(dir)
+	fs := http.FileServer(dir)
 	return func(w http.ResponseWriter, r *http.Request) {
-		srw := &statusResponseWriter{ResponseWriter: w}
-		h.ServeHTTP(srw, r)
-		if srw.status >= http.StatusBadRequest {
-			fmt.Println("error")
+		p := r.URL.Path
+		if !strings.HasPrefix(p, "/") {
+			p = "/" + r.URL.Path
+		}
+		if f, err := dir.Open(path.Clean(p)); err != nil {
+			if os.IsNotExist(err) {
+				Handle404(w, r)
+				fmt.Println("Handled nonexistend request")
+			} else {
+				fmt.Println(err)
+			}
 		} else {
-			fmt.Println("completed request")
+			f.Close()
+			fs.ServeHTTP(w, r)
+			fmt.Println("Completed request")
 		}
 	}
 }
