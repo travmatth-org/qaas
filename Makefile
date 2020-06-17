@@ -6,6 +6,9 @@ default: build
 build:
 	@go build -o $(APPLICATION) $(MAIN)
 
+run: build
+	@./$(APPLICATION) --port 8080 --static web  
+
 clean:
 	@rm -f $(APPLICATION)
 
@@ -20,4 +23,4 @@ test:
 
 check: lint vet test
 
-.PHONY: default build clean lint vet test check
+.PHONY: default build run clean lint vet test check

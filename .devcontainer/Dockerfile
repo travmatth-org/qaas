@@ -9,6 +9,15 @@ FROM amazonlinux:latest
 
 USER root
 
+# Go install vars
+ENV GOLANG_VERSION 1.14.4 
+ARG GO_ZIP=go$GOLANG_VERSION.linux-amd64.tar.gz
+ARG GOLANG_URL=https://storage.googleapis.com/golang/$GO_ZIP
+
+# Adding Go to env
+ENV GOPATH $HOME/workspace
+ENV PATH $PATH:/usr/local/go/bin:$GOPATH/bin
+
 # This Dockerfile adds a non-root user with sudo access. Use the "remoteUser"
 # property in devcontainer.json to use it. On Linux, the container user's GID/UIDs
 # will be updated to match your local UID/GID (when using the dockerFile property).
@@ -17,38 +26,30 @@ ARG USERNAME=vscode
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
 
-RUN yum -y install curl zip aws-cli gzip tar git sudo gcc make
-
-# Create a non-root user to use if preferred - see https://aka.ms/vscode-remote/containers/non-root-user.
-RUN groupadd --gid $USER_GID $USERNAME \
-    && useradd -s /bin/bash --uid $USER_UID --gid $USER_GID -m $USERNAME \
-    # [Optional] Add sudo support
-    && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
-    && chmod 0440 /etc/sudoers.d/$USERNAME
-
-# Configure golang
-WORKDIR ~
-
-ENV GOLANG_VERSION 1.14.4 
-ARG GO_ZIP=go$GOLANG_VERSION.linux-amd64.tar.gz
-ARG GOLANG_URL=https://storage.googleapis.com/golang/$GO_ZIP
-
-RUN curl -O $GOLANG_URL
-RUN gzip $GO_ZIP
-RUN tar -xvf $GO_ZIP
-RUN mv go /usr/local
-
-ENV GOPATH $HOME/workspace
-ENV PATH $PATH:/usr/local/go/bin:$GOPATH/bin
-RUN mkdir $HOME/workspace
-
 # Avoid warnings by switching to noninteractive
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Configure apt, install packages and tools
-RUN yum -y install \
-    # Verify git, process tools, lsb-release (common in install instructions for CLIs) installed
-    zsh git openssh-client less iproute2 procps lsb-release \
+RUN mkdir $HOME/workspace \
+    #
+    # Install tools for aws, go, dev
+    && yum -y install \
+        zsh git openssh-client less iproute2 procps curl \
+        lsb-release zip aws-cli gzip tar git sudo gcc make \
+    #
+    # Create a non-root user to use if preferred - see https://aka.ms/vscode-remote/containers/non-root-user.
+    && groupadd --gid $USER_GID $USERNAME \
+    && useradd -s /bin/bash --uid $USER_UID --gid $USER_GID -m $USERNAME \
+    #
+    # [Optional] Add sudo support
+    && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
+    && chmod 0440 /etc/sudoers.d/$USERNAME \
+    #
+    # Install golang
+    && cd ~ \
+    && curl -O $GOLANG_URL \
+    && gzip $GO_ZIP \
+    && tar -xvf $GO_ZIP \
+    && mv go /usr/local \
     #
     # Build Go tools w/module support
     && mkdir -p /tmp/gotools \
@@ -75,9 +76,6 @@ RUN yum -y install \
         github.com/fatih/gomodifytags@latest  \
         github.com/mgechev/revive@latest  \
         github.com/go-delve/delve/cmd/dlv@latest 2>&1 \
-    #
-    # Build Go tools w/o module support
-    && GOPATH=/tmp/gotools go get -v github.com/alecthomas/gometalinter 2>&1 \
     #
     # Build gocode-gomod
     && GOPATH=/tmp/gotools go get -x -d github.com/stamblerre/gocode 2>&1 \

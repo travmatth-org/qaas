@@ -17,7 +17,8 @@
 	},
 	// extensions to be installed in container on creation
 	"extensions": [
-		"golang.Go"
+		"golang.Go",
+		"tabnine.tabnine-vscode"
 	],
 	"dockerFile": "Dockerfile",
 }
