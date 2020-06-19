@@ -3,7 +3,7 @@ MAIN := cmd/faas/main.go
 
 default: build
 
-build:
+build: clean
 	@go build -o $(APPLICATION) $(MAIN)
 
 run: build
@@ -11,6 +11,7 @@ run: build
 
 clean:
 	@rm -f $(APPLICATION)
+	@go clean
 
 lint:
 	@golint -set_exit_status ./...
