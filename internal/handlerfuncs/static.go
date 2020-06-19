@@ -2,7 +2,6 @@ package handlerfuncs
 
 import (
 	"net/http"
-	"os"
 	"path"
 	"strings"
 
@@ -18,21 +17,10 @@ func extractAndCleanPath(r *http.Request) string {
 	return path.Clean(p)
 }
 
-func Static(c *config.Config) http.HandlerFunc {
-	dir := http.Dir(c.GetStaticRoot())
-	fs := http.FileServer(dir)
+func Home(c *config.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		p := extractAndCleanPath(r)
-		switch f, err := dir.Open(p); {
-		case os.IsNotExist(err):
-			NotFoundHandler(w, r)
-			hlog.FromRequest(r).Info().Msg("File not found")
-		case err != nil:
-			hlog.FromRequest(r).Info().Err(err).Msg("Completed Request")
-		default:
-			f.Close()
-			fs.ServeHTTP(w, r)
-			hlog.FromRequest(r).Info().Msg("Completed Request")
-		}
+		w.Write([]byte("Hello world"))
+		hlog.FromRequest(r).Info().
+			Msg("Request completed")
 	}
 }
