@@ -45,12 +45,17 @@ func (s *Server) middleware() middleware.Middleware {
 	)
 }
 
-func (s *Server) RegisterHandlers() {
+func (s *Server) RegisterHandlers() error {
 	mw := s.middleware()
-	homeRoute := mw(handlerfuncs.Home(s.config)).ServeHTTP
+	home, err := handlerfuncs.NewHome(s.config)
+	if err != nil {
+		return err
+	}
+	homeRoute := mw(home).ServeHTTP
 	notFoundRoute := mw(http.HandlerFunc(handlerfuncs.NotFoundHandler))
 	s.router.HandleFunc("/", homeRoute)
 	s.router.NotFoundHandler = notFoundRoute
+	return nil
 }
 
 func (s *Server) AcceptConnections() {

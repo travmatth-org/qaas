@@ -26,65 +26,69 @@ const (
 )
 
 type Config struct {
-	root         string
-	ip           string
-	port         string
-	readTimeout  time.Duration
-	writeTimeout time.Duration
-	stopTimeout  time.Duration
-	idleTimeout  time.Duration
+	static       *string
+	ip           *string
+	port         *string
+	readTimeout  *int
+	writeTimeout *int
+	stopTimeout  *int
+	idleTimeout  *int
+	dev          *bool
 }
 
 func Build() *Config {
+	c := &Config{}
 	message := "Directory static assets served from"
-	static := flag.String("static", DefaultRoot, message)
+	c.static = flag.String("static", DefaultRoot, message)
+
 	message = "ip server should listen on"
-	ip := flag.String("ip", DefaultIP, message)
+	c.ip = flag.String("ip", DefaultIP, message)
+
 	message = "Port server should listen on"
-	port := flag.String("port", DefaultPort, message)
+	c.port = flag.String("port", DefaultPort, message)
+
 	message = "Default timeout period for HTTP responses"
-	readTimeout := flag.Int("read-timeout", DefaultReadTimeout, message)
+	c.readTimeout = flag.Int("read-timeout", DefaultReadTimeout, message)
+
 	message = "Default timeout period for HTTP responses"
-	writeTimeout := flag.Int("write-timeout", DefaultWriteTimeout, message)
+	c.writeTimeout = flag.Int("write-timeout", DefaultWriteTimeout, message)
+
 	message = "Default idle period for HTTP responses"
-	idleTimeout := flag.Int("idle-timeout", DefaultIdleTimeout, message)
+	c.idleTimeout = flag.Int("idle-timeout", DefaultIdleTimeout, message)
+
 	message = "Default timeout for server to wait for existing connections to close"
-	stopTimeout := flag.Int("stop-timeout", DefaultStopTimeout, message)
+	c.stopTimeout = flag.Int("stop-timeout", DefaultStopTimeout, message)
+
+	message = "Set execution for development environment"
+	c.dev = flag.Bool("dev", false, message)
+
 	flag.Parse()
 
-	return &Config{
-		*static,
-		*ip,
-		*port,
-		time.Duration(*readTimeout) * time.Second,
-		time.Duration(*writeTimeout) * time.Second,
-		time.Duration(*idleTimeout) * time.Second,
-		time.Duration(*stopTimeout) * time.Second,
-	}
+	return c
 }
 
 func (c Config) GetReadTimeout() time.Duration {
-	return c.readTimeout
+	return time.Duration(*c.readTimeout) * time.Second
 }
 
 func (c Config) GetWriteTimeout() time.Duration {
-	return c.writeTimeout
+	return time.Duration(*c.writeTimeout) * time.Second
 }
 
 func (c Config) GetIdleTimeout() time.Duration {
-	return c.idleTimeout
+	return time.Duration(*c.idleTimeout) * time.Second
 }
 
 func (c Config) GetStopTimeout() time.Duration {
-	return c.stopTimeout
+	return time.Duration(*c.stopTimeout) * time.Second
 }
 
 func (c Config) GetStaticRoot() string {
-	return c.root
+	return *c.static
 }
 
 func (c Config) GetAddress() string {
-	return c.ip + ":" + c.port
+	return *c.ip + ":" + *c.port
 }
 
 func (c Config) GetIndexHtml() string {
@@ -93,4 +97,8 @@ func (c Config) GetIndexHtml() string {
 
 func (c Config) GetName() string {
 	return name
+}
+
+func (c Config) IsDev() bool {
+	return *c.dev
 }

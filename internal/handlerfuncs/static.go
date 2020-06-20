@@ -1,26 +1,35 @@
 package handlerfuncs
 
 import (
+	"io/ioutil"
 	"net/http"
-	"path"
-	"strings"
 
 	"github.com/Travmatth/faas/internal/config"
 	"github.com/rs/zerolog/hlog"
 )
 
-func extractAndCleanPath(r *http.Request) string {
-	p := r.URL.Path
-	if !strings.HasPrefix(p, "/") {
-		p = "/" + r.URL.Path
-	}
-	return path.Clean(p)
+type Home struct {
+	file   []byte
+	config *config.Config
 }
 
-func Home(c *config.Config) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Hello world"))
+func NewHome(c *config.Config) (*Home, error) {
+	filename := c.GetIndexHtml()
+	f, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+	return &Home{f, c}, nil
+}
+
+func (h *Home) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if bytes, err := w.Write(h.file); err != nil {
+		hlog.FromRequest(r).Error().
+			Err(err).
+			Msg("Error completing request")
+	} else {
 		hlog.FromRequest(r).Info().
+			Int("sent", bytes).
 			Msg("Request completed")
 	}
 }

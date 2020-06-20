@@ -11,7 +11,7 @@ run: build
 
 clean:
 	@rm -f $(APPLICATION)
-	@go clean
+	@go clean $(MAIN)
 
 lint:
 	@golint -set_exit_status ./...
