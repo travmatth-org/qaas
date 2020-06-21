@@ -22,6 +22,8 @@ const (
 	// DefaultIdleTimeout limits server-side the amount of time a Keep-Alive
 	// connection will be kept idle before being reused.
 	DefaultIdleTimeout = 10
+	Index              = "index.html"
+	NotFound           = "404.html"
 	name               = "faas"
 )
 
@@ -92,7 +94,11 @@ func (c Config) GetAddress() string {
 }
 
 func (c Config) GetIndexHtml() string {
-	return filepath.Join(c.GetStaticRoot(), "index.html")
+	return filepath.Join(c.GetStaticRoot(), Index)
+}
+
+func (c Config) Get404() string {
+	return filepath.Join(c.GetStaticRoot(), NotFound)
 }
 
 func (c Config) GetName() string {
