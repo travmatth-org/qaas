@@ -16,9 +16,9 @@ import (
 
 const (
 	// OK returned by server.AcceptConnections when signal directs shutdown
-	OK = iota
+	ok = iota
 	// Error returned by server.AcceptConnections when error forces shutdown
-	Fail
+	fail
 )
 
 // Server represents the running server with embedded
@@ -49,7 +49,7 @@ func New(c *config.Config, log zerolog.Logger) *Server {
 	return &Server{c, router, server, log, c.GetStopTimeout(), m}
 }
 
-func (s *Server) middleware() alice.Chain {
+func (s *Server) configureMiddleware() alice.Chain {
 	return alice.New(
 		hlog.NewHandler(s.log),
 		hlog.RequestIDHandler("req_id", "Request-Id"),
@@ -63,7 +63,7 @@ func (s *Server) middleware() alice.Chain {
 // the given middlewware on the server instance. Returns error if unable to
 // register handlers
 func (s *Server) RegisterHandlers() error {
-	mw := s.middleware()
+	mw := s.configureMiddleware()
 
 	// register index.html
 	index := s.GetIndexHTML()
@@ -97,19 +97,19 @@ func (s *Server) AcceptConnections() int {
 		s.log.Info().
 			Str("addr", s.GetAddress()).
 			Str("static", s.GetStaticRoot()).
-			Msg("Started")
+			Msg("Startin")
 		errCh <- s.ListenAndServe()
 	}()
 	select {
 	case err := <-errCh:
 		s.log.Fatal().Err(err).Msg("Error occurred, shutting down")
-		return Fail
+		return fail
 	case sig := <-sigCh:
 		ctx, cancel := context.WithTimeout(context.Background(), s.stopTimeout)
 		defer cancel()
 		err := s.Shutdown(ctx)
 		msg := "Received signal, shutting down"
 		s.log.Fatal().Err(err).Str("signal", sig.String()).Msg(msg)
-		return OK
+		return ok
 	}
 }
