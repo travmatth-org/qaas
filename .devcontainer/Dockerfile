@@ -5,9 +5,14 @@
 
 # FROM golang:1
 
-FROM amazonlinux:latest
+FROM amazonlinux:2
 
 USER root
+
+# Set docker containers terminal
+ENV LANG en_US.UTF-8
+ENV LANGUAGE en_US:en
+ENV LC_ALL en_US.UTF-8
 
 # Go install vars
 ENV GOLANG_VERSION 1.14.4 
