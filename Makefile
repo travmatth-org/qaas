@@ -7,7 +7,7 @@ build: clean
 	@go build -o $(APPLICATION) $(MAIN)
 
 run: build
-	@./$(APPLICATION) --port 8080 --static web  
+	@-./$(APPLICATION) --port 8080 --static web --dev  
 
 clean:
 	@rm -f $(APPLICATION)
@@ -17,7 +17,7 @@ lint:
 	@golint -set_exit_status ./...
 
 vet:
-	@go vet
+	@go vet $(MAIN)
 
 test:
 	@go test -v ./...
