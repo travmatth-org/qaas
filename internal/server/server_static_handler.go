@@ -7,8 +7,7 @@ import (
 	"github.com/rs/zerolog/hlog"
 )
 
-// LoadFileIntoMemory opens and reads a file into the servers static map
-func (s *Server) LoadFileIntoMemory(key, name string) error {
+func (s *Server) loadFileIntoMemory(key, name string) error {
 	f, err := ioutil.ReadFile(name)
 	if err == nil {
 		s.static[key] = f

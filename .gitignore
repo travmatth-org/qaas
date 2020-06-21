@@ -8,7 +8,7 @@
 *.so
 *.dylib
 
-# Test binary, build with 
+# Test binary, build with
 *.test
 
 # Output of the go coverage tool, specifically when used with LiteIDE
@@ -19,7 +19,6 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
-faas
 
 # vscode remote debugger artifacts
 **/__debug_bin

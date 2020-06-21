@@ -67,7 +67,7 @@ func (s *Server) RegisterHandlers() error {
 
 	// register index.html
 	index := s.GetIndexHTML()
-	err := s.LoadFileIntoMemory(index, index)
+	err := s.loadFileIntoMemory(index, index)
 	if err != nil {
 		return err
 	}
@@ -78,7 +78,7 @@ func (s *Server) RegisterHandlers() error {
 
 	// register 404.html
 	notfound := s.Get404()
-	err = s.LoadFileIntoMemory(notfound, notfound)
+	err = s.loadFileIntoMemory(notfound, notfound)
 	if err != nil {
 		return err
 	}

@@ -1,4 +1,4 @@
-APPLICATION := faas
+APPLICATION := dist/faas
 MAIN := cmd/faas/main.go
 
 default: build
