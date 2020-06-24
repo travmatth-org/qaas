@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/Travmatth/faas/internal/config"
+	"github.com/Travmatth/faas/internal/logger"
 	"github.com/gorilla/mux"
 	"github.com/justinas/alice"
-	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/hlog"
 )
 
@@ -29,14 +29,13 @@ type Server struct {
 	*config.Config
 	*mux.Router
 	*http.Server
-	log         zerolog.Logger
 	stopTimeout time.Duration
 	static      map[string][]byte
 }
 
 // New configures and returns a server instance struct.
 // Accepts a config and zerolog.Logger struct for embedding
-func New(c *config.Config, log zerolog.Logger) *Server {
+func New(c *config.Config) *Server {
 	router := mux.NewRouter()
 	server := &http.Server{
 		Addr:         c.GetAddress(),
@@ -46,12 +45,12 @@ func New(c *config.Config, log zerolog.Logger) *Server {
 		Handler:      router,
 	}
 	m := make(map[string][]byte)
-	return &Server{c, router, server, log, c.GetStopTimeout(), m}
+	return &Server{c, router, server, c.GetStopTimeout(), m}
 }
 
 func (s *Server) configureMiddleware() alice.Chain {
 	return alice.New(
-		hlog.NewHandler(s.log),
+		hlog.NewHandler(*logger.GetLogger()),
 		hlog.RequestIDHandler("req_id", "Request-Id"),
 		hlog.RemoteAddrHandler("ip"),
 		hlog.RequestHandler("dest"),
@@ -67,49 +66,54 @@ func (s *Server) RegisterHandlers() error {
 
 	// register index.html
 	index := s.GetIndexHTML()
-	err := s.loadFileIntoMemory(index, index)
-	if err != nil {
+	if err := s.loadFileIntoMemory(index, index); err != nil {
 		return err
 	}
 	endpoint := "/"
 	s.HandleFunc(endpoint, mw.ThenFunc(s.ServeStatic(index)).ServeHTTP)
-	msg := "Registered static file to endpoint"
-	s.log.Info().Str("endpoint", endpoint).Str("file", index).Msg(msg)
+	logger.Info().
+		Str("file", index).
+		Str("endpoint", endpoint).
+		Msg("Registered static file to endpoint")
 
 	// register 404.html
 	notfound := s.Get404()
-	err = s.loadFileIntoMemory(notfound, notfound)
-	if err != nil {
+	if err := s.loadFileIntoMemory(notfound, notfound); err != nil {
 		return err
 	}
 	s.NotFoundHandler = mw.ThenFunc(s.ServeStatic(notfound))
-	msg = "Registered static file to 404 endpoint"
-	s.log.Info().Str("file", notfound).Msg(msg)
+	logger.Info().
+		Str("file", notfound).
+		Msg("Registered static file to 404 endpoint")
 	return nil
 }
 
 // AcceptConnections listens on the configured address and ports for http
 // traffic. Simultaneously listens for incoming os signals, will return on
+// either a server error or a shutdown signal
 func (s *Server) AcceptConnections() int {
 	errCh, sigCh := make(chan error, 1), make(chan os.Signal, 1)
 	signal.Notify(sigCh, os.Interrupt)
-	go func() {
-		s.log.Info().
-			Str("addr", s.GetAddress()).
-			Str("static", s.GetStaticRoot()).
-			Msg("Startin")
-		errCh <- s.ListenAndServe()
-	}()
+	go s.StartListening(errCh)
 	select {
 	case err := <-errCh:
-		s.log.Fatal().Err(err).Msg("Error occurred, shutting down")
+		logger.Error().Err(err).Msg("Error occurred, shutting down")
 		return fail
 	case sig := <-sigCh:
 		ctx, cancel := context.WithTimeout(context.Background(), s.stopTimeout)
 		defer cancel()
-		err := s.Shutdown(ctx)
-		msg := "Received signal, shutting down"
-		s.log.Fatal().Err(err).Str("signal", sig.String()).Msg(msg)
+		logger.Error().
+			Err(s.Shutdown(ctx)).
+			Str("signal", sig.String()).
+			Msg("Received signal, shutting down")
 		return ok
 	}
+}
+
+// StartListening encapsulates the server listening lifetime,
+// sends closing error to channel passed as parameter
+func (s *Server) StartListening(ch chan error) {
+	addr, static := s.GetAddress(), s.GetStaticRoot()
+	logger.Info().Str("addr", addr).Str("static", static).Msg("Starting")
+	ch <- s.ListenAndServe()
 }

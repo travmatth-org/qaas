@@ -3,7 +3,7 @@ MAIN := cmd/faas/main.go
 
 default: build
 
-build: clean
+build: clean $(MAIN)
 	@go build -o $(APPLICATION) $(MAIN)
 
 run: build

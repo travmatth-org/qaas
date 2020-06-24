@@ -16,27 +16,9 @@ func TestConfig(t *testing.T) {
 	os.Args = []string{"faas"}
 	defer func() { os.Args = old }()
 
-	var static, ip, port *string
-	dstatic, dip, dport := defaultRoot, defaultIP, defaultPort
-	static, ip, port = &dstatic, &dip, &dport
-
-	var read, write, stop, idle *int
-	r, w, s, i := defaultReadTimeout, defaultWriteTimeout, defaultStopTimeout, defaultIdleTimeout
-	read, write, stop, idle = &r, &w, &s, &i
-
-	var dev *bool
-	b := false
-	dev = &b
-
 	c := Config{
-		static,
-		ip,
-		port,
-		read,
-		write,
-		stop,
-		idle,
-		dev,
+		defaultRoot, defaultIP, defaultPort, defaultReadTimeout,
+		defaultWriteTimeout, defaultStopTimeout, defaultIdleTimeout, false,
 	}
 
 	type method struct {
