@@ -29,8 +29,10 @@ type Server struct {
 	*config.Config
 	*mux.Router
 	*http.Server
-	stopTimeout time.Duration
-	static      map[string][]byte
+	stopTimeout   time.Duration
+	static        map[string][]byte
+	signalChannel chan os.Signal
+	errorChannel  chan error
 }
 
 // New configures and returns a server instance struct.
@@ -45,7 +47,9 @@ func New(c *config.Config) *Server {
 		Handler:      router,
 	}
 	m := make(map[string][]byte)
-	return &Server{c, router, server, c.GetStopTimeout(), m}
+	sig := make(chan os.Signal, 1)
+	err := make(chan error, 1)
+	return &Server{c, router, server, c.GetStopTimeout(), m, sig, err}
 }
 
 func (s *Server) configureMiddleware() alice.Chain {
@@ -92,14 +96,13 @@ func (s *Server) RegisterHandlers() error {
 // traffic. Simultaneously listens for incoming os signals, will return on
 // either a server error or a shutdown signal
 func (s *Server) AcceptConnections() int {
-	errCh, sigCh := make(chan error, 1), make(chan os.Signal, 1)
-	signal.Notify(sigCh, os.Interrupt)
-	go s.StartListening(errCh)
+	signal.Notify(s.signalChannel, os.Interrupt)
+	go s.StartListening(s.errorChannel)
 	select {
-	case err := <-errCh:
+	case err := <-s.errorChannel:
 		logger.Error().Err(err).Msg("Error occurred, shutting down")
 		return fail
-	case sig := <-sigCh:
+	case sig := <-s.signalChannel:
 		ctx, cancel := context.WithTimeout(context.Background(), s.stopTimeout)
 		defer cancel()
 		logger.Error().
@@ -113,7 +116,7 @@ func (s *Server) AcceptConnections() int {
 // StartListening encapsulates the server listening lifetime,
 // sends closing error to channel passed as parameter
 func (s *Server) StartListening(ch chan error) {
-	addr, static := s.GetAddress(), s.GetStaticRoot()
+	addr, static := s.GetAddress(), s.Static
 	logger.Info().Str("addr", addr).Str("static", static).Msg("Starting")
 	ch <- s.ListenAndServe()
 }

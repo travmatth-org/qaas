@@ -11,29 +11,26 @@ func mockTime() time.Duration { return time.Duration(0) }
 func mockStr() string         { return "" }
 func mockBool() bool          { return false }
 
+type method struct {
+	duration func() time.Duration
+	str      func() string
+	boolean  func() bool
+}
+
+type want struct {
+	duration time.Duration
+	str      string
+	boolean  bool
+}
+
+var cnv = func(i int) time.Duration { return time.Second * time.Duration(i) }
+
 func TestConfig(t *testing.T) {
 	old := os.Args
 	os.Args = []string{"faas"}
 	defer func() { os.Args = old }()
 
-	c := Config{
-		defaultRoot, defaultIP, defaultPort, defaultReadTimeout,
-		defaultWriteTimeout, defaultStopTimeout, defaultIdleTimeout, false,
-	}
-
-	type method struct {
-		duration func() time.Duration
-		str      func() string
-		boolean  func() bool
-	}
-
-	type want struct {
-		duration time.Duration
-		str      string
-		boolean  bool
-	}
-
-	cnv := func(i int) time.Duration { return time.Second * time.Duration(i) }
+	c := Build()
 
 	tests := []struct {
 		name   string
@@ -44,32 +41,26 @@ func TestConfig(t *testing.T) {
 		{
 			"TestGetReadTimeout",
 			method{c.GetReadTimeout, mockStr, mockBool},
-			want{cnv(defaultReadTimeout), "", false},
+			want{cnv(DefaultReadTimeout), "", false},
 			"duration",
 		},
 		{
 			"TestGetWriteTimeout",
 			method{c.GetWriteTimeout, mockStr, mockBool},
-			want{cnv(defaultWriteTimeout), "", false},
+			want{cnv(DefaultWriteTimeout), "", false},
 			"duration",
 		},
 		{
 			"TestGetIdleTimeout",
 			method{c.GetIdleTimeout, mockStr, mockBool},
-			want{cnv(defaultIdleTimeout), "", false},
+			want{cnv(DefaultIdleTimeout), "", false},
 			"duration",
 		},
 		{
 			"TestGetStopTimeout",
 			method{c.GetStopTimeout, mockStr, mockBool},
-			want{cnv(defaultStopTimeout), "", false},
+			want{cnv(DefaultStopTimeout), "", false},
 			"duration",
-		},
-		{
-			"TestGetStaticRoot",
-			method{mockTime, c.GetStaticRoot, mockBool},
-			want{time.Duration(0), defaultRoot, false},
-			"string",
 		},
 		{
 			"TestGetAddress",
@@ -80,19 +71,13 @@ func TestConfig(t *testing.T) {
 		{
 			"TestGetIndexHTML",
 			method{mockTime, c.GetIndexHTML, mockBool},
-			want{time.Duration(0), filepath.Join(defaultRoot, "index.html"), false},
+			want{time.Duration(0), filepath.Join(DefaultRoot, "index.html"), false},
 			"string",
 		},
 		{
 			"TestGet404",
 			method{mockTime, c.Get404, mockBool},
-			want{time.Duration(0), filepath.Join(defaultRoot, "404.html"), false},
-			"string",
-		},
-		{
-			"TestName",
-			method{mockTime, c.GetName, mockBool},
-			want{time.Duration(0), name, false},
+			want{time.Duration(0), filepath.Join(DefaultRoot, "404.html"), false},
 			"string",
 		},
 		{

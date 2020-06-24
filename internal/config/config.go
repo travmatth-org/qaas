@@ -7,47 +7,56 @@ import (
 )
 
 const (
-	defaultRoot         = "/srv/www/static"
-	defaultIP           = "0.0.0.0"
-	defaultPort         = "80"
-	defaultReadTimeout  = 10
-	defaultWriteTimeout = 10
-	defaultStopTimeout  = 10
-	defaultIdleTimeout  = 10
-	index               = "index.html"
-	notFound            = "404.html"
-	name                = "faas"
+	DefaultRoot         = "/srv/www/static"
+	DefaultIP           = "0.0.0.0"
+	DefaultPort         = "80"
+	DefaultReadTimeout  = 5
+	DefaultWriteTimeout = 5
+	DefaultStopTimeout  = 5
+	DefaultIdleTimeout  = 5
+	Index               = "index.html"
+	NotFound            = "404.html"
+	Name                = "faas"
 )
 
 // Config manages the configuration options of the program.
 // All members are unexported, accessed solely through member methods
 type Config struct {
-	static       string
-	ip           string
-	port         string
-	readTimeout  int
-	writeTimeout int
-	stopTimeout  int
-	idleTimeout  int
-	dev          bool
+	Static       string
+	IP           string
+	Port         string
+	ReadTimeout  int
+	WriteTimeout int
+	StopTimeout  int
+	IdleTimeout  int
+	Dev          bool
+}
+
+// New construct and returns a config with default values,
+// for use in testing server
+func New() *Config {
+	return &Config{
+		DefaultRoot, DefaultIP, DefaultPort, DefaultReadTimeout,
+		DefaultWriteTimeout, DefaultStopTimeout, DefaultIdleTimeout, false,
+	}
 }
 
 // Build uses `flag` package to build and return config struct.
 func Build() *Config {
 	message := "Directory static assets served from"
-	static := flag.String("static", defaultRoot, message)
+	static := flag.String("static", DefaultRoot, message)
 	message = "ip server should listen on"
-	ip := flag.String("ip", defaultIP, message)
+	ip := flag.String("ip", DefaultIP, message)
 	message = "Port server should listen on"
-	port := flag.String("port", defaultPort, message)
+	port := flag.String("port", DefaultPort, message)
 	message = "Default timeout period for HTTP responses"
-	readTimeout := flag.Int("read-timeout", defaultReadTimeout, message)
+	readTimeout := flag.Int("read-timeout", DefaultReadTimeout, message)
 	message = "Default timeout period for HTTP responses"
-	writeTimeout := flag.Int("write-timeout", defaultWriteTimeout, message)
+	writeTimeout := flag.Int("write-timeout", DefaultWriteTimeout, message)
 	message = "Default idle period for HTTP responses"
-	idleTimeout := flag.Int("idle-timeout", defaultIdleTimeout, message)
+	idleTimeout := flag.Int("idle-timeout", DefaultIdleTimeout, message)
 	message = "Default timeout for server to wait for existing connections to close"
-	stopTimeout := flag.Int("stop-timeout", defaultStopTimeout, message)
+	stopTimeout := flag.Int("stop-timeout", DefaultStopTimeout, message)
 	message = "Set execution for development environment"
 	dev := flag.Bool("dev", false, message)
 
@@ -61,50 +70,40 @@ func Build() *Config {
 
 // GetReadTimeout returns the time.Duration of the read timeout
 func (c Config) GetReadTimeout() time.Duration {
-	return time.Duration(c.readTimeout) * time.Second
+	return time.Duration(c.ReadTimeout) * time.Second
 }
 
 // GetWriteTimeout returns the time.Duration of the write timeout
 func (c Config) GetWriteTimeout() time.Duration {
-	return time.Duration(c.writeTimeout) * time.Second
+	return time.Duration(c.WriteTimeout) * time.Second
 }
 
 // GetIdleTimeout returns the time.Duration of the idle timeout
 func (c Config) GetIdleTimeout() time.Duration {
-	return time.Duration(c.idleTimeout) * time.Second
+	return time.Duration(c.IdleTimeout) * time.Second
 }
 
 // GetStopTimeout returns the time.Duration of the stop timeout
 func (c Config) GetStopTimeout() time.Duration {
-	return time.Duration(c.stopTimeout) * time.Second
-}
-
-// GetStaticRoot returns the directory of static assets
-func (c Config) GetStaticRoot() string {
-	return c.static
+	return time.Duration(c.StopTimeout) * time.Second
 }
 
 // GetAddress returns the address:port of the server and port to listen on
 func (c Config) GetAddress() string {
-	return c.ip + ":" + c.port
+	return c.IP + ":" + c.Port
 }
 
 // GetIndexHTML returns the filename of the html page
 func (c Config) GetIndexHTML() string {
-	return filepath.Join(c.GetStaticRoot(), index)
+	return filepath.Join(c.Static, Index)
 }
 
 // Get404 returns the filename of the 404 page
 func (c Config) Get404() string {
-	return filepath.Join(c.GetStaticRoot(), notFound)
-}
-
-// GetName returns the name of the program
-func (c Config) GetName() string {
-	return name
+	return filepath.Join(c.Static, NotFound)
 }
 
 // IsDev returns bool representing whether program executing in dev mode
 func (c Config) IsDev() bool {
-	return c.dev
+	return c.Dev
 }

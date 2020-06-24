@@ -18,12 +18,14 @@ type output struct {
 	Message string `json:"message"`
 }
 
-func resetLogger(want *bytes.Buffer) {
-	destination, instance = want, nil
-	GetLogger()
-}
-
 const incorrectStructMessage = "Incorrect log:\n\thave%+v\n\twant: %+v\n"
+
+func reset() *bytes.Buffer {
+	want := new(bytes.Buffer)
+	Destination, Instance = want, nil
+	GetLogger()
+	return want
+}
 
 func TestSetLogger(t *testing.T) {
 	var want bytes.Buffer
@@ -33,7 +35,7 @@ func TestSetLogger(t *testing.T) {
 	SetLogger(&log)
 	log.Error().Bool("test", true).Msg("Succeeded")
 
-	if !reflect.DeepEqual(log, *instance) {
+	if !reflect.DeepEqual(log, *Instance) {
 		t.Fatal("SetLogger did not set correctly")
 	}
 	reference := output{"error", true, "Succeeded"}
@@ -68,10 +70,9 @@ func TestLevelLogs(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var out output
-			var want bytes.Buffer
 
 			// reset log singleton
-			resetLogger(&want)
+			want := reset()
 
 			// trigger output to log
 			tt.log().Bool("test", true).Msg("Succeeded")
@@ -87,7 +88,7 @@ func TestLevelLogs(t *testing.T) {
 	}
 }
 
-func TestInfo(t *testing.T) {
+func TestLogsFromRequest(t *testing.T) {
 	tests := []struct {
 		name  string
 		log   func(r *http.Request) *zerolog.Event
@@ -102,10 +103,9 @@ func TestInfo(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var out output
-			var want bytes.Buffer
 
 			// reset log singleton
-			resetLogger(&want)
+			want := reset()
 
 			// handlerfunc that outputs to log
 			f := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

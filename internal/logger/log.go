@@ -10,26 +10,26 @@ import (
 	"github.com/rs/zerolog/hlog"
 )
 
-var instance *zerolog.Logger
-var destination io.Writer = os.Stderr
+var Instance *zerolog.Logger
+var Destination io.Writer = os.Stderr
 
 func SetLogger(base *zerolog.Logger) {
-	instance = base
+	Instance = base
 }
 
 func GetLogger() *zerolog.Logger {
-	if instance != nil {
-		return instance
+	if Instance != nil {
+		return Instance
 	}
 
 	zerolog.TimeFieldFormat = time.RFC1123
-	base := zerolog.New(destination).With().
+	base := zerolog.New(Destination).With().
 		Timestamp().
 		Caller().
 		Str("role", "faas").
 		Logger()
 	SetLogger(&base)
-	return instance
+	return Instance
 }
 
 func Error() *zerolog.Event {

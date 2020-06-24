@@ -9,6 +9,9 @@ build: clean $(MAIN)
 run: build
 	@-./$(APPLICATION) --port 8080 --static web --dev  
 
+test_clean:
+	@go clean -testcache
+
 clean:
 	@rm -f $(APPLICATION)
 	@go clean $(MAIN)
@@ -19,7 +22,7 @@ lint:
 vet:
 	@go vet $(MAIN)
 
-test:
+test: test_clean
 	@go test -v ./...
 
 check: lint vet test
