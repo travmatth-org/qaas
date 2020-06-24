@@ -1,4 +1,4 @@
-# Fortune of the Day (FAAS)
+# Fortunes As A Service (FAAS)
 
 A ridiculously overengineered cloud native application, managing all of your fortune-telling needs.
 
