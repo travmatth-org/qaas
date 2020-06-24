@@ -32,39 +32,32 @@ func GetLogger() *zerolog.Logger {
 	return instance
 }
 
-// Error
 func Error() *zerolog.Event {
 	return GetLogger().Error()
+}
+
+func Info() *zerolog.Event {
+	return GetLogger().Info()
+}
+
+func Warn() *zerolog.Event {
+	return GetLogger().Warn()
+}
+
+func Debug() *zerolog.Event {
+	return GetLogger().Debug()
 }
 
 func ErrorReq(r *http.Request) *zerolog.Event {
 	return hlog.FromRequest(r).Error()
 }
 
-// Info
-
-func Info() *zerolog.Event {
-	return GetLogger().Info()
-}
-
 func InfoReq(r *http.Request) *zerolog.Event {
 	return hlog.FromRequest(r).Info()
 }
 
-// Warn
-
-func Warn() *zerolog.Event {
-	return GetLogger().Warn()
-}
-
 func WarnReq(r *http.Request) *zerolog.Event {
 	return hlog.FromRequest(r).Warn()
-}
-
-// Debug
-
-func Debug() *zerolog.Event {
-	return GetLogger().Debug()
 }
 
 func DebugReq(r *http.Request) *zerolog.Event {
