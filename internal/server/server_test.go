@@ -1,16 +1,16 @@
 package server
 
 import (
+	"bytes"
 	"encoding/json"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 
 	"github.com/Travmatth/faas/internal/config"
 	"github.com/Travmatth/faas/internal/logger"
 	config_utils "github.com/Travmatth/faas/test/utils/config"
-	"github.com/gorilla/mux"
 )
 
 type middlewareRef struct {
@@ -24,16 +24,22 @@ type middlewareRef struct {
 	Message string `json:"message"`
 }
 
-func TestServer_configureMiddlewareConfiguresLogs(t *testing.T) {
-	// configure a server endpoint, mocking out logs for a buffer
+func configureServer() (*bytes.Buffer, *Server) {
 	logged := config_utils.ResetLogger()
 	c := config.New()
 	c.Port = "8080"
-	srv := New(c)
+	c.Static = "../../web"
+	s := New(c)
+	return logged, s
+}
+
+func TestServer_configureMiddlewareConfiguresLogs(t *testing.T) {
+	// configure a server endpoint, mocking out logs for a buffer
+	logged, s := configureServer()
 	f := func(w http.ResponseWriter, r *http.Request) {
 		logger.InfoReq(r).Bool("test", true).Msg("Succeeded")
 	}
-	h := srv.configureMiddleware().ThenFunc(http.HandlerFunc(f))
+	h := s.configureMiddleware().ThenFunc(http.HandlerFunc(f))
 
 	// perform a request to server, triggering logging middleware
 	req, _ := http.NewRequest("GET", "/", nil)
@@ -47,32 +53,47 @@ func TestServer_configureMiddlewareConfiguresLogs(t *testing.T) {
 	}
 }
 
-func TestServer_Routes(t *testing.T) {
-	type fields struct {
-		Config      *config.Config
-		Router      *mux.Router
-		Server      *http.Server
-		stopTimeout time.Duration
-		static      map[string][]byte
+func makeRequest(t *testing.T, s *Server, endpoint string) *bytes.Buffer {
+	req, err := http.NewRequest("GET", endpoint, nil)
+	if err != nil {
+		t.Fatal("Error in test while creating request: ", err)
 	}
+	rr := httptest.NewRecorder()
+	s.ServeHTTP(rr, req)
+	return rr.Body
+}
+
+func TestServer_HomeAnd404Routes(t *testing.T) {
+	// configure a server endpoint, mocking out logs for a buffer
+	_, s := configureServer()
+	if err := s.RegisterHandlers(); err != nil {
+		t.Fatal("Error creating server endpoints: ", err)
+	}
+
 	tests := []struct {
-		name    string
-		fields  fields
-		wantErr bool
+		name     string
+		endpoint string
+		file     string
 	}{
-		// TODO: Add test cases.
+		{"TestHomeRoute", "/", s.GetIndexHTML()},
+		{"Test404Route", "/foobar", s.Get404()},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := &Server{
-				Config:      tt.fields.Config,
-				Router:      tt.fields.Router,
-				Server:      tt.fields.Server,
-				stopTimeout: tt.fields.stopTimeout,
-				static:      tt.fields.static,
+			// read original file from filesystem
+			want, err := ioutil.ReadFile(tt.file)
+			if err != nil {
+				t.Fatal("Error in test while reading ref file: ", err)
 			}
-			if err := s.RegisterHandlers(); (err != nil) != tt.wantErr {
-				t.Errorf("Server.RegisterHandlers() error = %v, wantErr %v", err, tt.wantErr)
+
+			// make request to server
+			f := makeRequest(t, s, tt.endpoint)
+			got, err := ioutil.ReadAll(f)
+			if err != nil {
+				t.Fatal("Error in test while reading request to []byte: ", err)
+			} else if bytes.Compare(got, want) != 0 {
+				t.Fatal("Error incorrect body returned for: ", tt.endpoint, tt.file)
 			}
 		})
 	}

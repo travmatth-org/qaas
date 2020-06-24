@@ -13,12 +13,12 @@ func main() {
 	c := config.Build()
 
 	// Create server
-	srv := server.New(c)
-	if err := srv.RegisterHandlers(); err != nil {
+	s := server.New(c)
+	if err := s.RegisterHandlers(); err != nil {
 		logger.Error().Err(err).Msg("Launch aborted")
 		os.Exit(1)
 	}
 
 	// run server
-	os.Exit(srv.AcceptConnections())
+	os.Exit(s.AcceptConnections())
 }
