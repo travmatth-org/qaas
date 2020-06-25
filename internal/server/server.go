@@ -57,43 +57,34 @@ func New(c *config.Config) *Server {
 	return &Server{c, router, server, c.GetStopTimeout(), m, sig, err, started, nil}
 }
 
-func (s *Server) configureMiddleware() alice.Chain {
+func (s *Server) logMiddleware(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		logger.InfoReq(r).Msg("Received request")
+		h.ServeHTTP(w, r)
+	})
+}
+
+func (s *Server) wrapRoute(h http.HandlerFunc) http.HandlerFunc {
 	return alice.New(
 		hlog.NewHandler(*logger.GetLogger()),
 		hlog.RequestIDHandler("req_id", "Request-Id"),
 		hlog.RemoteAddrHandler("ip"),
 		hlog.RequestHandler("dest"),
 		hlog.RefererHandler("referer"),
-	)
+		s.logMiddleware,
+	).ThenFunc(h).ServeHTTP
 }
 
 // RegisterHandlers attemtps to prepare and register the specified routes with
 // the given middlewware on the server instance. Returns error if unable to
 // register handlers
 func (s *Server) RegisterHandlers() error {
-	mw := s.configureMiddleware()
-
-	// register index.html
-	index := s.GetIndexHTML()
-	if err := s.loadFileIntoMemory(index, index); err != nil {
-		return err
-	}
-	endpoint := "/"
-	s.HandleFunc(endpoint, mw.ThenFunc(s.ServeStatic(index)).ServeHTTP)
-	logger.Info().
-		Str("file", index).
-		Str("endpoint", endpoint).
-		Msg("Registered static file to endpoint")
-
-	// register 404.html
-	notfound := s.Get404()
-	if err := s.loadFileIntoMemory(notfound, notfound); err != nil {
-		return err
-	}
-	s.NotFoundHandler = mw.ThenFunc(s.ServeStatic(notfound))
-	logger.Info().
-		Str("file", notfound).
-		Msg("Registered static file to 404 endpoint")
+	index, notfound := s.GetIndexHTML(), s.Get404()
+	// register endpoints
+	s.HandleFunc("/", s.wrapRoute(s.ServeStatic(index)))
+	// 404 endpoint
+	s.NotFoundHandler = s.wrapRoute(s.ServeStatic(notfound))
+	logger.Info().Msg("Registered home and 404 html pages to endpoints")
 	return nil
 }
 
@@ -135,9 +126,7 @@ func (s *Server) StartServing() {
 		s.errorChannel <- errors.New("Not listening on port")
 		return
 	}
-	logger.Info().
-		Str("addr", s.GetAddress()).
-		Str("static", s.Static).
-		Msg("Started")
+	addr, dir := s.GetAddress(), s.Static
+	logger.Info().Str("addr", addr).Str("static", dir).Msg("Started")
 	s.errorChannel <- s.Serve(*s.httpListener)
 }

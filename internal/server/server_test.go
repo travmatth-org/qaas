@@ -55,7 +55,7 @@ func TestServer_configureMiddlewareConfiguresLogs(t *testing.T) {
 	f := func(w http.ResponseWriter, r *http.Request) {
 		logger.InfoReq(r).Bool("test", true).Msg("Succeeded")
 	}
-	h := s.configureMiddleware().ThenFunc(http.HandlerFunc(f))
+	h := s.wrapRoute(http.HandlerFunc(f))
 
 	// perform a request to server, triggering logging middleware
 	req, _ := http.NewRequest("GET", "/", nil)
