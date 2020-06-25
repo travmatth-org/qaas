@@ -4,7 +4,6 @@ import (
 	"os"
 
 	"github.com/Travmatth/faas/internal/config"
-	"github.com/Travmatth/faas/internal/logger"
 	"github.com/Travmatth/faas/internal/server"
 )
 
@@ -14,10 +13,7 @@ func main() {
 
 	// Create server
 	s := server.New(c)
-	if err := s.RegisterHandlers(); err != nil {
-		logger.Error().Err(err).Msg("Launch aborted")
-		os.Exit(1)
-	}
+	s.RegisterHandlers()
 
 	// run server
 	os.Exit(s.AcceptConnections())

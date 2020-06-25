@@ -76,17 +76,13 @@ func (s *Server) wrapRoute(h http.HandlerFunc) http.HandlerFunc {
 	).ThenFunc(h).ServeHTTP
 }
 
-// RegisterHandlers attemtps to prepare and register the specified routes with
-// the given middlewware on the server instance. Returns error if unable to
-// register handlers
-func (s *Server) RegisterHandlers() error {
+// RegisterHandlers attemtps to prepare and register the specified
+// routes with the given middlewware on the server instance.
+func (s *Server) RegisterHandlers() {
 	index, notfound := s.GetIndexHTML(), s.Get404()
-	// register endpoints
 	s.HandleFunc("/", s.wrapRoute(s.ServeStatic(index)))
-	// 404 endpoint
 	s.NotFoundHandler = s.wrapRoute(s.ServeStatic(notfound))
 	logger.Info().Msg("Registered home and 404 html pages to endpoints")
-	return nil
 }
 
 // AcceptConnections listens on the configured address and ports for http
