@@ -10,7 +10,7 @@ run: build
 	@-./$(APPLICATION) --port 8080 --static web --dev  
 
 test_clean:
-	@go clean -testcache
+	@go clean -testcache $(MAIN)
 
 clean:
 	@rm -f $(APPLICATION)
