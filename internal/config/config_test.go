@@ -63,12 +63,6 @@ func TestConfig(t *testing.T) {
 			"duration",
 		},
 		{
-			"TestGetAddress",
-			method{mockTime, c.GetAddress, mockBool},
-			want{time.Duration(0), "0.0.0.0:80", false},
-			"string",
-		},
-		{
 			"TestGetIndexHTML",
 			method{mockTime, c.GetIndexHTML, mockBool},
 			want{time.Duration(0), filepath.Join(DefaultRoot, "index.html"), false},

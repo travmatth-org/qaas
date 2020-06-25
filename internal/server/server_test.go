@@ -6,7 +6,10 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"strings"
+	"syscall"
 	"testing"
+	"time"
 
 	"github.com/Travmatth/faas/internal/config"
 	"github.com/Travmatth/faas/internal/logger"
@@ -24,33 +27,16 @@ type middlewareRef struct {
 	Message string `json:"message"`
 }
 
-func configureServer() (*bytes.Buffer, *Server) {
+func configureServer(t *testing.T) (*bytes.Buffer, *Server) {
 	logged := config_utils.ResetLogger()
 	c := config.New()
-	c.Port = "8080"
+	c.Port = ":8080"
 	c.Static = "../../web"
 	s := New(c)
+	if err := s.RegisterHandlers(); err != nil {
+		t.Fatal("Error creating server endpoints: ", err)
+	}
 	return logged, s
-}
-
-func TestServer_configureMiddlewareConfiguresLogs(t *testing.T) {
-	// configure a server endpoint, mocking out logs for a buffer
-	logged, s := configureServer()
-	f := func(w http.ResponseWriter, r *http.Request) {
-		logger.InfoReq(r).Bool("test", true).Msg("Succeeded")
-	}
-	h := s.configureMiddleware().ThenFunc(http.HandlerFunc(f))
-
-	// perform a request to server, triggering logging middleware
-	req, _ := http.NewRequest("GET", "/", nil)
-	rr := httptest.NewRecorder()
-	h.ServeHTTP(rr, req)
-
-	// middleware should test server logs correctly
-	var got middlewareRef
-	if err := json.Unmarshal(logged.Bytes(), &got); err != nil {
-		t.Fatal("Error unmarshaling log object: ", err)
-	}
 }
 
 func makeRequest(t *testing.T, s *Server, endpoint string) *bytes.Buffer {
@@ -63,12 +49,30 @@ func makeRequest(t *testing.T, s *Server, endpoint string) *bytes.Buffer {
 	return rr.Body
 }
 
+func TestServer_configureMiddlewareConfiguresLogs(t *testing.T) {
+	// configure a server endpoint, mocking out logs for a buffer
+	logged, s := configureServer(t)
+	f := func(w http.ResponseWriter, r *http.Request) {
+		logger.InfoReq(r).Bool("test", true).Msg("Succeeded")
+	}
+	h := s.configureMiddleware().ThenFunc(http.HandlerFunc(f))
+
+	// perform a request to server, triggering logging middleware
+	req, _ := http.NewRequest("GET", "/", nil)
+	rr := httptest.NewRecorder()
+	h.ServeHTTP(rr, req)
+
+	// middleware should test server logs correctly
+	var got middlewareRef
+	first := strings.Split(logged.String(), "\n")[0]
+	if err := json.Unmarshal([]byte(first), &got); err != nil {
+		t.Fatal("Error unmarshaling log object: ", err, logged.String())
+	}
+}
+
 func TestServer_HomeAnd404Routes(t *testing.T) {
 	// configure a server endpoint, mocking out logs for a buffer
-	_, s := configureServer()
-	if err := s.RegisterHandlers(); err != nil {
-		t.Fatal("Error creating server endpoints: ", err)
-	}
+	_, s := configureServer(t)
 
 	tests := []struct {
 		name     string
@@ -92,9 +96,43 @@ func TestServer_HomeAnd404Routes(t *testing.T) {
 			got, err := ioutil.ReadAll(f)
 			if err != nil {
 				t.Fatal("Error in test while reading request to []byte: ", err)
-			} else if bytes.Compare(got, want) != 0 {
+			} else if !bytes.Equal(got, want) {
 				t.Fatal("Error incorrect body returned for: ", tt.endpoint, tt.file)
 			}
 		})
+	}
+}
+
+func TestServer_SignalShutdown(t *testing.T) {
+	// configure a server endpoint, mocking out logs for a buffer
+	_, s := configureServer(t)
+	ch := make(chan int, 1)
+	go func() {
+		ch <- s.AcceptConnections()
+	}()
+	<-s.startedChannel
+
+	// mock an http request
+	res, err := http.Get("http://127.0.0.1:8080")
+	if err != nil {
+		t.Fatal("Error in test while mocking request: ", err)
+	}
+	defer res.Body.Close()
+	_, err = ioutil.ReadAll(res.Body)
+	if err != nil {
+		t.Fatal("Error in test while decoding mock request: ", err)
+	}
+
+	// send shutdown signal
+	syscall.Kill(syscall.Getpid(), syscall.SIGINT)
+
+	// block until shutdown received, or timeout exceeded
+	select {
+	case status := <-ch:
+		if status != ok {
+			t.Fatal("Error: incorrect shutdown val: ", status)
+		}
+	case <-time.After(3 * time.Second):
+		t.Fatal("Error: timeout exceeded")
 	}
 }

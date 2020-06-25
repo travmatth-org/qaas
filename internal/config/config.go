@@ -9,7 +9,7 @@ import (
 const (
 	DefaultRoot         = "/srv/www/static"
 	DefaultIP           = "0.0.0.0"
-	DefaultPort         = "80"
+	DefaultPort         = ":80"
 	DefaultReadTimeout  = 5
 	DefaultWriteTimeout = 5
 	DefaultStopTimeout  = 5
@@ -90,7 +90,7 @@ func (c Config) GetStopTimeout() time.Duration {
 
 // GetAddress returns the address:port of the server and port to listen on
 func (c Config) GetAddress() string {
-	return c.IP + ":" + c.Port
+	return c.IP + c.Port
 }
 
 // GetIndexHTML returns the filename of the html page

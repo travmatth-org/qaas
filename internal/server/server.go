@@ -2,6 +2,8 @@ package server
 
 import (
 	"context"
+	"errors"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -29,10 +31,12 @@ type Server struct {
 	*config.Config
 	*mux.Router
 	*http.Server
-	stopTimeout   time.Duration
-	static        map[string][]byte
-	signalChannel chan os.Signal
-	errorChannel  chan error
+	stopTimeout    time.Duration
+	static         map[string][]byte
+	signalChannel  chan os.Signal
+	errorChannel   chan error
+	startedChannel chan struct{}
+	httpListener   *net.Listener
 }
 
 // New configures and returns a server instance struct.
@@ -49,7 +53,8 @@ func New(c *config.Config) *Server {
 	m := make(map[string][]byte)
 	sig := make(chan os.Signal, 1)
 	err := make(chan error, 1)
-	return &Server{c, router, server, c.GetStopTimeout(), m, sig, err}
+	started := make(chan struct{})
+	return &Server{c, router, server, c.GetStopTimeout(), m, sig, err, started, nil}
 }
 
 func (s *Server) configureMiddleware() alice.Chain {
@@ -96,8 +101,20 @@ func (s *Server) RegisterHandlers() error {
 // traffic. Simultaneously listens for incoming os signals, will return on
 // either a server error or a shutdown signal
 func (s *Server) AcceptConnections() int {
+	// register and intercept shutdown signals
 	signal.Notify(s.signalChannel, os.Interrupt)
-	go s.StartListening(s.errorChannel)
+
+	// start listener and notify on success
+	if ln, err := net.Listen("tcp", s.Port); err != nil {
+		logger.Error().Err(err).Msg("Error starting server")
+		return fail
+	} else {
+		s.httpListener = &ln
+		close(s.startedChannel)
+	}
+
+	// process incoming requests, close on err or force shutdown on signal
+	go s.StartServing()
 	select {
 	case err := <-s.errorChannel:
 		logger.Error().Err(err).Msg("Error occurred, shutting down")
@@ -113,10 +130,14 @@ func (s *Server) AcceptConnections() int {
 	}
 }
 
-// StartListening encapsulates the server listening lifetime,
-// sends closing error to channel passed as parameter
-func (s *Server) StartListening(ch chan error) {
-	addr, static := s.GetAddress(), s.Static
-	logger.Info().Str("addr", addr).Str("static", static).Msg("Starting")
-	ch <- s.ListenAndServe()
+func (s *Server) StartServing() {
+	if s.httpListener == nil {
+		s.errorChannel <- errors.New("Not listening on port")
+		return
+	}
+	logger.Info().
+		Str("addr", s.GetAddress()).
+		Str("static", s.Static).
+		Msg("Started")
+	s.errorChannel <- s.Serve(*s.httpListener)
 }
