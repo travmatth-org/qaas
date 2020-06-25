@@ -6,8 +6,7 @@ import (
 	"github.com/Travmatth/faas/internal/logger"
 )
 
-// ServeStatic prepares and returns a http.Handler serving a single
-// file located in the map of the server
+// ServeStatic prepares and returns a http.Handler serving a single file
 func (s *Server) ServeStatic(key string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, key)
