@@ -72,6 +72,7 @@ func (s *Server) wrapRoute(h http.HandlerFunc) http.HandlerFunc {
 		hlog.RequestHandler("dest"),
 		hlog.RefererHandler("referer"),
 		s.logMiddleware,
+		s.RecoverHandler,
 	).ThenFunc(h).ServeHTTP
 }
 
