@@ -37,13 +37,13 @@ test: test.clean
 check: lint vet test
 
 # generate and view coverage
-coverage: test
+coverage:
 	@go test -v ./... -coverprofile $(COVERAGE_OUT)
 
 coverage.html: coverage
 	@go tool cover -html=cover.out -o $(COVERAGE_HTML)
 
-coverage.view: coverage.html
+coverage.view: test coverage.html
 	@open $(COVERAGE_HTML)
 
 .PHONY: default build run clean lint vet test check

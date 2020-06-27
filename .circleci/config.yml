@@ -3,7 +3,7 @@
 # Check https://circleci.com/docs/2.0/language-go/ for more details
 version: 2
 jobs:
-  build:
+  test:
     docker:
       # specify the version
       - image: travmatth/amazonlinux-golang-dev
@@ -20,14 +20,12 @@ jobs:
     working_directory: /go/src/github.com/Travmatth/faas
     steps:
       - checkout
-
       # specify any bash command here prefixed with `run: `
       - run: make get
+      # lint, vet, test
       - run: make check
       # generate code cov
-      - run:
-        command: |
-          make coverage.html
-          mv coverage.html /tmp/artifacts
+      - run: make coverage.html
+      - run: mv coverage.html /tmp/artifacts
       - store_artifacts:
         path: /tmp/artifacts
