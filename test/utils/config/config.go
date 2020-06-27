@@ -10,7 +10,8 @@ import (
 // byte buffer backend, returns buffer
 func ResetLogger() *bytes.Buffer {
 	want := new(bytes.Buffer)
-	logger.Destination, logger.Instance = want, nil
+	logger.SetDestination(want)
+	logger.SetLogger(nil)
 	logger.GetLogger()
 	return want
 }

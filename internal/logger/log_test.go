@@ -22,7 +22,8 @@ const incorrectStructMessage = "Incorrect log:\n\thave%+v\n\twant: %+v\n"
 
 func reset() *bytes.Buffer {
 	want := new(bytes.Buffer)
-	Destination, Instance = want, nil
+	SetDestination(want)
+	SetLogger(nil)
 	GetLogger()
 	return want
 }
@@ -35,7 +36,7 @@ func TestSetLogger(t *testing.T) {
 	SetLogger(&log)
 	log.Error().Bool("test", true).Msg("Succeeded")
 
-	if !reflect.DeepEqual(log, *Instance) {
+	if !reflect.DeepEqual(log, *instance) {
 		t.Fatal("SetLogger did not set correctly")
 	}
 	reference := output{"error", true, "Succeeded"}

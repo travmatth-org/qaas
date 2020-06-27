@@ -106,7 +106,7 @@ func TestServer_HomeAnd404Routes(t *testing.T) {
 	}
 }
 
-func TestServer_SignalShutdown(t *testing.T) {
+func startServerTest(t *testing.T) (*Server, chan int) {
 	// configure a server endpoint, mocking out logs for a buffer
 	_, s := configureServer(t)
 	ch := make(chan int, 1)
