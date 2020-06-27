@@ -22,3 +22,4 @@
 
 # vscode remote debugger artifacts
 **/__debug_bin
+*.out

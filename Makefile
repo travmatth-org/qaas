@@ -26,6 +26,9 @@ vet:
 test: test_clean
 	@go test -v ./...
 
+coverage: test_clean
+	@go test -v ./... -coverprofile cover.out
+
 check: lint vet test
 
 .PHONY: default build run clean lint vet test check
