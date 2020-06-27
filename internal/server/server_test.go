@@ -123,17 +123,36 @@ func startServerTest(t *testing.T) (*Server, chan int) {
 	defer res.Body.Close()
 	_, err = ioutil.ReadAll(res.Body)
 	if err != nil {
-		t.Fatal("Error in test while decoding mock request: ", err)
+		t.Fatal("Error in test while decoding mock response: ", err)
 	}
+	return s, ch
+}
 
+func TestServer_SignalShutdown(t *testing.T) {
+	_, ch := startServerTest(t)
 	// send shutdown signal
 	syscall.Kill(syscall.Getpid(), syscall.SIGINT)
-
 	// block until shutdown received, or timeout exceeded
 	select {
 	case status := <-ch:
 		if status != ok {
 			t.Fatal("Error: incorrect shutdown val: ", status)
+		}
+	case <-time.After(3 * time.Second):
+		t.Fatal("Error: timeout exceeded")
+	}
+}
+
+func TestServer_ErrorShutdown(t *testing.T) {
+}
+
+func TestServer_ChecksListenerNotNil(t *testing.T) {
+	s := New(config.New())
+	go s.StartServing()
+	select {
+	case err := <-s.errorChannel:
+		if err == nil {
+			t.Fatal("Error: StartServing() should err on nil http listener")
 		}
 	case <-time.After(3 * time.Second):
 		t.Fatal("Error: timeout exceeded")
