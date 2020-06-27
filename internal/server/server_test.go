@@ -13,7 +13,7 @@ import (
 
 	"github.com/Travmatth/faas/internal/config"
 	"github.com/Travmatth/faas/internal/logger"
-	config_utils "github.com/Travmatth/faas/test/utils/config"
+	confighelpers "github.com/Travmatth/faas/test/utils/config"
 )
 
 const (
@@ -32,7 +32,7 @@ type middlewareRef struct {
 }
 
 func configureServer(t *testing.T) (*bytes.Buffer, *Server) {
-	logged := config_utils.ResetLogger()
+	logged := confighelpers.ResetLogger()
 	c := config.New()
 	// listen on loopback interface only
 	c.Port = LoopbackTestPort
@@ -148,7 +148,7 @@ func TestServer_ErrorShutdown(t *testing.T) {
 
 func TestServer_ChecksListenerNotNil(t *testing.T) {
 	s := New(config.New())
-	go s.StartServing()
+	go s.startServing()
 	select {
 	case err := <-s.errorChannel:
 		if err == nil {

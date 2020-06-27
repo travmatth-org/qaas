@@ -6,12 +6,12 @@ import (
 	"testing"
 
 	"github.com/Travmatth/faas/internal/config"
-	config_utils "github.com/Travmatth/faas/test/utils/config"
+	confighelpers "github.com/Travmatth/faas/test/utils/config"
 )
 
 func TestServer_RecoverHandler(t *testing.T) {
 	// Create server
-	config_utils.ResetLogger()
+	confighelpers.ResetLogger()
 	s := New(config.New())
 
 	// Create a crashing handler and wrap it with the recovery handler

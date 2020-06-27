@@ -93,16 +93,16 @@ func (s *Server) AcceptConnections() int {
 	signal.Notify(s.signalChannel, os.Interrupt)
 
 	// start listener and notify on success
-	if ln, err := net.Listen("tcp", s.Port); err != nil {
+	ln, err := net.Listen("tcp", s.Port)
+	if err != nil {
 		logger.Error().Err(err).Msg("Error starting server")
 		return fail
-	} else {
-		s.httpListener = &ln
-		close(s.startedChannel)
 	}
+	s.httpListener = &ln
+	close(s.startedChannel)
 
 	// process incoming requests, close on err or force shutdown on signal
-	go s.StartServing()
+	go s.startServing()
 	select {
 	case err := <-s.errorChannel:
 		logger.Error().Err(err).Msg("Error occurred, shutting down")
@@ -118,7 +118,8 @@ func (s *Server) AcceptConnections() int {
 	}
 }
 
-func (s *Server) StartServing() {
+// serve http on given listener, or return if no listener
+func (s *Server) startServing() {
 	if s.httpListener == nil {
 		s.errorChannel <- errors.New("Not listening on port")
 		return

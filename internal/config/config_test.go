@@ -41,25 +41,25 @@ func TestConfig(t *testing.T) {
 		{
 			"TestGetReadTimeout",
 			method{c.GetReadTimeout, mockStr, mockBool},
-			want{cnv(DefaultReadTimeout), "", false},
+			want{cnv(defaultReadTimeout), "", false},
 			"duration",
 		},
 		{
 			"TestGetWriteTimeout",
 			method{c.GetWriteTimeout, mockStr, mockBool},
-			want{cnv(DefaultWriteTimeout), "", false},
+			want{cnv(defaultWriteTimeout), "", false},
 			"duration",
 		},
 		{
 			"TestGetIdleTimeout",
 			method{c.GetIdleTimeout, mockStr, mockBool},
-			want{cnv(DefaultIdleTimeout), "", false},
+			want{cnv(defaultIdleTimeout), "", false},
 			"duration",
 		},
 		{
 			"TestGetStopTimeout",
 			method{c.GetStopTimeout, mockStr, mockBool},
-			want{cnv(DefaultStopTimeout), "", false},
+			want{cnv(defaultStopTimeout), "", false},
 			"duration",
 		},
 		{
@@ -71,13 +71,13 @@ func TestConfig(t *testing.T) {
 		{
 			"TestGetIndexHTML",
 			method{mockTime, c.GetIndexHTML, mockBool},
-			want{time.Duration(0), filepath.Join(DefaultRoot, "index.html"), false},
+			want{time.Duration(0), filepath.Join(defaultRoot, "index.html"), false},
 			"string",
 		},
 		{
 			"TestGet404",
 			method{mockTime, c.Get404, mockBool},
-			want{time.Duration(0), filepath.Join(DefaultRoot, "404.html"), false},
+			want{time.Duration(0), filepath.Join(defaultRoot, "404.html"), false},
 			"string",
 		},
 		{

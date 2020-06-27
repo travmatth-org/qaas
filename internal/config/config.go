@@ -7,16 +7,16 @@ import (
 )
 
 const (
-	DefaultRoot         = "/srv/www/static"
-	DefaultIP           = "0.0.0.0"
-	DefaultPort         = ":80"
-	DefaultReadTimeout  = 5
-	DefaultWriteTimeout = 5
-	DefaultStopTimeout  = 5
-	DefaultIdleTimeout  = 5
-	Index               = "index.html"
-	NotFound            = "404.html"
-	Name                = "faas"
+	defaultRoot         = "/srv/www/static"
+	defaultIP           = "0.0.0.0"
+	defaultPort         = ":80"
+	defaultReadTimeout  = 5
+	defaultWriteTimeout = 5
+	defaultStopTimeout  = 5
+	defaultIdleTimeout  = 5
+	index               = "index.html"
+	notFound            = "404.html"
+	name                = "faas"
 )
 
 // Config manages the configuration options of the program.
@@ -36,13 +36,13 @@ type Config struct {
 // for use in testing server
 func New() *Config {
 	return &Config{
-		Static:       DefaultRoot,
-		IP:           DefaultIP,
-		Port:         DefaultPort,
-		ReadTimeout:  DefaultReadTimeout,
-		WriteTimeout: DefaultWriteTimeout,
-		StopTimeout:  DefaultStopTimeout,
-		IdleTimeout:  DefaultIdleTimeout,
+		Static:       defaultRoot,
+		IP:           defaultIP,
+		Port:         defaultPort,
+		ReadTimeout:  defaultReadTimeout,
+		WriteTimeout: defaultWriteTimeout,
+		StopTimeout:  defaultStopTimeout,
+		IdleTimeout:  defaultIdleTimeout,
 		Dev:          false,
 	}
 }
@@ -50,19 +50,19 @@ func New() *Config {
 // Build uses `flag` package to build and return config struct.
 func Build() *Config {
 	message := "Directory static assets served from"
-	static := flag.String("static", DefaultRoot, message)
+	static := flag.String("static", defaultRoot, message)
 	message = "ip server should listen on"
-	ip := flag.String("ip", DefaultIP, message)
+	ip := flag.String("ip", defaultIP, message)
 	message = "Port server should listen on"
-	port := flag.String("port", DefaultPort, message)
+	port := flag.String("port", defaultPort, message)
 	message = "Default timeout period for HTTP responses"
-	readTimeout := flag.Int("read-timeout", DefaultReadTimeout, message)
+	readTimeout := flag.Int("read-timeout", defaultReadTimeout, message)
 	message = "Default timeout period for HTTP responses"
-	writeTimeout := flag.Int("write-timeout", DefaultWriteTimeout, message)
+	writeTimeout := flag.Int("write-timeout", defaultWriteTimeout, message)
 	message = "Default idle period for HTTP responses"
-	idleTimeout := flag.Int("idle-timeout", DefaultIdleTimeout, message)
+	idleTimeout := flag.Int("idle-timeout", defaultIdleTimeout, message)
 	message = "Default timeout for server to wait for existing connections to close"
-	stopTimeout := flag.Int("stop-timeout", DefaultStopTimeout, message)
+	stopTimeout := flag.Int("stop-timeout", defaultStopTimeout, message)
 	message = "Set execution for development environment"
 	dev := flag.Bool("dev", false, message)
 
@@ -101,12 +101,12 @@ func (c Config) GetAddress() string {
 
 // GetIndexHTML returns the filename of the html page
 func (c Config) GetIndexHTML() string {
-	return filepath.Join(c.Static, Index)
+	return filepath.Join(c.Static, index)
 }
 
 // Get404 returns the filename of the 404 page
 func (c Config) Get404() string {
-	return filepath.Join(c.Static, NotFound)
+	return filepath.Join(c.Static, notFound)
 }
 
 // IsDev returns bool representing whether program executing in dev mode

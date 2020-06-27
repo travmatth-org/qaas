@@ -19,7 +19,7 @@ func SetLogger(base *zerolog.Logger) {
 	instance = base
 }
 
-// SetLogger sets the output location of the logger
+// SetDestination sets the output location of the logger
 func SetDestination(dest io.Writer) {
 	destination = dest
 }
