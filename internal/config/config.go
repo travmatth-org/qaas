@@ -36,8 +36,14 @@ type Config struct {
 // for use in testing server
 func New() *Config {
 	return &Config{
-		DefaultRoot, DefaultIP, DefaultPort, DefaultReadTimeout,
-		DefaultWriteTimeout, DefaultStopTimeout, DefaultIdleTimeout, false,
+		Static:       DefaultRoot,
+		IP:           DefaultIP,
+		Port:         DefaultPort,
+		ReadTimeout:  DefaultReadTimeout,
+		WriteTimeout: DefaultWriteTimeout,
+		StopTimeout:  DefaultStopTimeout,
+		IdleTimeout:  DefaultIdleTimeout,
+		Dev:          false,
 	}
 }
 

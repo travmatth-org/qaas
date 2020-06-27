@@ -100,3 +100,10 @@ func TestConfig(t *testing.T) {
 		})
 	}
 }
+
+func TestDev(t *testing.T) {
+	c := New()
+	if c.IsDev() != false {
+		t.Fatalf("Error: Incorrect default dev val")
+	}
+}
