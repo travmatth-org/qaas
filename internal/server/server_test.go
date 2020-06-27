@@ -33,9 +33,7 @@ func configureServer(t *testing.T) (*bytes.Buffer, *Server) {
 	c.Port = ":8080"
 	c.Static = "../../web"
 	s := New(c)
-	if err := s.RegisterHandlers(); err != nil {
-		t.Fatal("Error creating server endpoints: ", err)
-	}
+	s.RegisterHandlers()
 	return logged, s
 }
 
