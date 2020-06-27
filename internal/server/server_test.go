@@ -16,6 +16,10 @@ import (
 	config_utils "github.com/Travmatth/faas/test/utils/config"
 )
 
+const (
+	LoopbackTestPort = "127.0.0.1:8080"
+)
+
 type middlewareRef struct {
 	Level   string `json:"level"`
 	Role    string `json:"role"`
@@ -31,7 +35,7 @@ func configureServer(t *testing.T) (*bytes.Buffer, *Server) {
 	logged := config_utils.ResetLogger()
 	c := config.New()
 	// listen on loopback interface only
-	c.Port = "127.0.0.1:8080"
+	c.Port = LoopbackTestPort
 	c.Static = "../../web"
 	s := New(c)
 	s.RegisterHandlers()
@@ -112,7 +116,7 @@ func TestServer_SignalShutdown(t *testing.T) {
 	<-s.startedChannel
 
 	// mock an http request
-	res, err := http.Get("http://127.0.0.1:8080")
+	res, err := http.Get(LoopbackTestPort)
 	if err != nil {
 		t.Fatal("Error in test while mocking request: ", err)
 	}
