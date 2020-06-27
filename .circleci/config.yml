@@ -13,21 +13,29 @@ jobs:
       # documented at https://circleci.com/docs/2.0/circleci-images/
       # - image: circleci/postgres:9.4
 
-    #### TEMPLATE_NOTE: go expects specific checkout path representing url
-    #### expecting it in the form of
-    ####   /go/src/github.com/circleci/go-tool
-    ####   /go/src/bitbucket.org/circleci/go-tool
+    environment:
+      TEST_RESULTS: /tmp/test-results
+      COVERAGE_RESULTS: /tmp/test-coverage
     working_directory: /go/src/github.com/Travmatth/faas
-    steps:
-      - checkout
-      # specify any bash command here prefixed with `run: `
-      - run: make get
-      # lint, vet, test
-      - run: make check
-      # generate code cov
+    steps: # steps that compromise the `build` job
+      - checkout # check out source code to working directory
       - run:
+          name: Download dependencies
+          command: make get
+      - run:
+          name: Perform linting, vetting, testing
+          command: make check
+      - run:
+          name: Generate code coverage.html
           command: |
               make coverage.html
               mv coverage.html /tmp/artifacts
       - store_artifacts:
           path: /tmp/artifacts
+      - store_test_results: # upload test results for display in Test Summary
+          path: tmp/test-results
+workflows:
+  version: 2
+  build-workflow:
+    jobs:
+      - build
