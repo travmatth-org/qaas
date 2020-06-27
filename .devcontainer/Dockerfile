@@ -3,8 +3,6 @@
 # Licensed under the MIT License. See https://go.microsoft.com/fwlink/?linkid=2090316 for license information.
 #-------------------------------------------------------------------------------------------------------------
 
-# FROM golang:1
-
 FROM amazonlinux:2
 
 USER root
