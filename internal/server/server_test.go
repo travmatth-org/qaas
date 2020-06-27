@@ -116,7 +116,7 @@ func TestServer_SignalShutdown(t *testing.T) {
 	<-s.startedChannel
 
 	// mock an http request
-	res, err := http.Get(LoopbackTestPort)
+	res, err := http.Get("http://" + LoopbackTestPort)
 	if err != nil {
 		t.Fatal("Error in test while mocking request: ", err)
 	}
