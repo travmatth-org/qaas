@@ -2,8 +2,8 @@
 APPLICATION := dist/faas
 MAIN := cmd/faas/main.go
 TEST_PORT := ":8080"
-COVERAGE_OUT := cover.out
-COVERAGE_HTML := cover.html
+COVERAGE_OUT := coverage.out
+COVERAGE_HTML := coverage.html
 
 # targets involved in compiling, runnnig faas in prod and dev
 default: build
