@@ -24,3 +24,9 @@ jobs:
       # specify any bash command here prefixed with `run: `
       - run: make get
       - run: make check
+      # generate code cov
+      - run: |
+        make coverage.html
+        mv coverage.html /tmp/artifacts
+      - store_artifacts:
+        path: /tmp/artifacts
