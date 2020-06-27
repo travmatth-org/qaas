@@ -41,7 +41,7 @@ coverage:
 	@go test -v ./... -coverprofile $(COVERAGE_OUT)
 
 coverage.html: coverage
-	@go tool cover -html=cover.out -o $(COVERAGE_HTML)
+	@go tool cover -html=$(COVERAGE_OUT) -o $(COVERAGE_HTML)
 
 coverage.view: test coverage.html
 	@open $(COVERAGE_HTML)
