@@ -30,7 +30,8 @@ type middlewareRef struct {
 func configureServer(t *testing.T) (*bytes.Buffer, *Server) {
 	logged := config_utils.ResetLogger()
 	c := config.New()
-	c.Port = ":8080"
+	// listen on loopback interface only
+	c.Port = "127.0.0.1:8080"
 	c.Static = "../../web"
 	s := New(c)
 	s.RegisterHandlers()
