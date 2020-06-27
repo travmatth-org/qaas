@@ -25,8 +25,9 @@ jobs:
       - run: make get
       - run: make check
       # generate code cov
-      - run: |
-        make coverage.html
-        mv coverage.html /tmp/artifacts
+      - run:
+        command: |
+          make coverage.html
+          mv coverage.html /tmp/artifacts
       - store_artifacts:
         path: /tmp/artifacts
