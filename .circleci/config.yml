@@ -25,7 +25,9 @@ jobs:
       # lint, vet, test
       - run: make check
       # generate code cov
-      - run: make coverage.html
-      - run: mv coverage.html /tmp/artifacts
+      - run:
+        command: |
+          make coverage.html
+          mv coverage.html /tmp/artifacts
       - store_artifacts:
           path: /tmp/artifacts
