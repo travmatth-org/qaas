@@ -1,7 +1,11 @@
+# make vars
 APPLICATION := dist/faas
 MAIN := cmd/faas/main.go
 TEST_PORT := ":8080"
+COVERAGE_OUT := cover.out
+COVERAGE_HTML := cover.html
 
+# targets involved in compiling, runnnig faas in prod and dev
 default: build
 
 build: clean $(MAIN)
@@ -10,9 +14,10 @@ build: clean $(MAIN)
 run: build
 	@-./$(APPLICATION) --port $(TEST_PORT) --static web --dev  
 
-test_clean:
-	@go clean -testcache $(MAIN)
+get: $(MAIN)
+	@go get -v -t -d ./...
 
+# targets involved in cleaning, linting, checking and testing faas
 clean:
 	@rm -f $(APPLICATION)
 	@go clean $(MAIN)
@@ -23,12 +28,22 @@ lint:
 vet:
 	@go vet $(MAIN)
 
-test: test_clean
+test.clean:
+	@go clean -testcache $(MAIN)
+
+test: test.clean
 	@go test -v ./...
 
-coverage: test_clean
-	@go test -v ./... -coverprofile cover.out
-
 check: lint vet test
+
+# generate and view coverage
+coverage: test
+	@go test -v ./... -coverprofile $(COVERAGE_OUT)
+
+coverage.html: coverage
+	@go tool cover -html=cover.out -o $(COVERAGE_HTML)
+
+coverage.view: coverage.html
+	@open $(COVERAGE_HTML)
 
 .PHONY: default build run clean lint vet test check
