@@ -11,6 +11,7 @@ import (
 
 	"github.com/Travmatth/faas/internal/config"
 	"github.com/Travmatth/faas/internal/logger"
+	"github.com/Travmatth/faas/internal/middleware"
 	"github.com/gorilla/mux"
 	"github.com/justinas/alice"
 	"github.com/rs/zerolog/hlog"
@@ -57,22 +58,15 @@ func New(c *config.Config) *Server {
 	return &Server{c, router, server, c.GetStopTimeout(), m, sig, err, started, nil}
 }
 
-func (s *Server) logMiddleware(h http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		logger.InfoReq(r).Msg("Received request")
-		h.ServeHTTP(w, r)
-	})
-}
-
 func (s *Server) wrapRoute(h http.HandlerFunc) http.HandlerFunc {
 	return alice.New(
+		s.RecoverHandler,
 		hlog.NewHandler(*logger.GetLogger()),
 		hlog.RequestIDHandler("req_id", "Request-Id"),
 		hlog.RemoteAddrHandler("ip"),
 		hlog.RequestHandler("dest"),
 		hlog.RefererHandler("referer"),
-		s.logMiddleware,
-		s.RecoverHandler,
+		middleware.Log,
 	).ThenFunc(h).ServeHTTP
 }
 
