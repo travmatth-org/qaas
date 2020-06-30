@@ -18,7 +18,8 @@
 	// extensions to be installed in container on creation
 	"extensions": [
 		"golang.Go",
-		"tabnine.tabnine-vscode"
+		"tabnine.tabnine-vscode",
+		"hashicorp.terraform"
 	],
 	"dockerFile": "Dockerfile",
 }
