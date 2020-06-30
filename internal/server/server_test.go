@@ -131,7 +131,10 @@ func startServerTest(t *testing.T) (*Server, chan int) {
 func TestServer_SignalShutdown(t *testing.T) {
 	_, ch := startServerTest(t)
 	// send shutdown signal
-	syscall.Kill(syscall.Getpid(), syscall.SIGINT)
+	err := syscall.Kill(syscall.Getpid(), syscall.SIGINT)
+	if err != nil {
+		t.Fatal("Error in killing test server: ", err)
+	}
 	// block until shutdown received, or timeout exceeded
 	select {
 	case status := <-ch:
