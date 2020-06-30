@@ -32,6 +32,10 @@ ARG USER_GID=$USER_UID
 # Avoid warnings by switching to noninteractive
 ENV DEBIAN_FRONTEND=noninteractive
 
+# version of terraform to install
+ARG TERRAFORM_VERSION=0.12.28
+ARG TERRAFORM_PACKAGE=terraform_${TERRAFORM_VERSION}_linux_amd64.zip
+
 RUN mkdir $HOME/workspace \
     #
     # Install tools for aws, go, dev
@@ -90,6 +94,11 @@ RUN mkdir $HOME/workspace \
     #
     # Install golangci-lint
     && curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b /usr/local/bin 2>&1 \
+    #
+    # Install terraform
+    && curl -sSfLOJ https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/$TERRAFORM_PACKAGE \
+    && unzip $TERRAFORM_PACKAGE \
+    && mv terraform /usr/local/bin \
     #
     # Clean up
     && yum autoremove -y \
