@@ -1,0 +1,18 @@
+version: 0.1
+
+phases:
+  install:
+    commands:
+      - make get
+  pre_build:
+    commands:
+      - make check
+  build:
+    commands:
+      - make build
+
+artifacts:
+  files:
+    - dist/
+    - web/
+    - build/ci/appspec.yml

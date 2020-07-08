@@ -1,6 +1,6 @@
 {
 	"name": "Faas Dev Container",
-	"dockerfile": "Dockerfile",
+	"dockerfile": "../build/docker/dev.dockerfile",
 	"runArgs": [
 		"--cap-add=SYS_PTRACE",
 		"--security-opt",
@@ -21,5 +21,5 @@
 		"tabnine.tabnine-vscode",
 		"hashicorp.terraform"
 	],
-	"dockerFile": "Dockerfile",
+	"dockerFile": "../build/docker/dev.dockerfile",
 }

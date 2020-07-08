@@ -40,7 +40,7 @@ RUN mkdir $HOME/workspace \
     #
     # Install tools for aws, go, dev
     && yum -y install \
-        zsh git openssh-client less iproute2 procps curl \
+        zsh git openssh-client less iproute2 procps curl unzip \
         lsb-release zip aws-cli gzip tar git sudo gcc make \
     #
     # Create a non-root user to use if preferred - see https://aka.ms/vscode-remote/containers/non-root-user.
@@ -96,8 +96,9 @@ RUN mkdir $HOME/workspace \
     && curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b /usr/local/bin 2>&1 \
     #
     # Install terraform
-    && curl -sSfLOJ https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/$TERRAFORM_PACKAGE \
+    && curl -sSfLOJ https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/${TERRAFORM_PACKAGE} \
     && unzip $TERRAFORM_PACKAGE \
+    && rm ${TERRAFORM_PACKAGE} \
     && mv terraform /usr/local/bin \
     #
     # Clean up
