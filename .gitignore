@@ -24,6 +24,8 @@ cover.html
 # vscode remote debugger artifacts
 **/__debug_bin
 
-# terraform vars & state files
+# terraform vars, state files, crash logs etc
 **/*.tfvars
 **/*.tfstate
+**/.terraform
+crash.log
