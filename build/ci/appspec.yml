@@ -2,8 +2,10 @@ version: 0.0
 os: linux
 
 files:
-  - source: /
+  - source: httpd
     destination: /usr/sbin
+  - source: httpd.service
+    destination: /usr/lib/systemd/system
 
 hoooks:
   BeforeInstall:
