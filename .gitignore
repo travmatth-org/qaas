@@ -25,6 +25,7 @@ cover.html
 **/__debug_bin
 
 # terraform vars, state files, crash logs etc
+**/*.tfplan
 **/*.tfvars
 **/*.tfstate
 **/.terraform
