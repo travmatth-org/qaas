@@ -27,6 +27,6 @@ cover.html
 # terraform vars, state files, crash logs etc
 **/*.tfplan
 **/*.tfvars
-**/*.tfstate
+**/*.tfstate*
 **/.terraform
 crash.log
