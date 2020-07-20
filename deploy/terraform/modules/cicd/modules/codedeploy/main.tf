@@ -2,33 +2,30 @@ resource "aws_codedeploy_app" "faas" {
 	name = "faas"
 }
 
-resource "aws_iam_role" "codedeploy_role" {
-	name = "FaasCodeDeployRole"
-	assume_role_policy =<<EOF
-{
-	"Version": "2012-10-17",
-	"Statement": [
-		{
-			"Sid": "",
-			"Effect": "Allow",
-			"Principal": {
-				"Service": "codedeploy.amazon.aws.com"
-			},
-			"Action": "sts:AssumeRole"
+data "aws_iam_policy_document" "codedeploy" {
+	statement {
+		actions = ["sts:AssumeRole"]
+
+		principals {
+			type		= "Service"
+			identifiers = ["codedeploy.amazonaws.com"]
 		}
-	]
-}
-EOF
+	}
 }
 
-resource "aws_iam_role_policy_attachment" "AWSCodeDeployRole" {
-	policy_arn = "arn:aws:iam:policy/service-role/AWSCodeDeployRole"
-	role = aws_iam_role.codedeploy_role.name
+resource "aws_iam_role" "codedeploy_role" {
+	name				= "faas_codedeploy_role"
+	assume_role_policy	= data.aws_iam_policy_document.codedeploy.json
+}
+
+resource "aws_iam_role_policy_attachment" "codedeploy_attach" {
+	role		= aws_iam_role.codedeploy_role.name
+	policy_arn	= "arn:aws:iam::aws:policy/service-role/AWSCodeDeployRole"
 }
 
 resource "aws_codedeploy_deployment_group" "deploy" {
 	app_name 			  = aws_codedeploy_app.faas.name
-	deployment_group_name = "faas-ec2-group"
+	deployment_group_name = "${aws_codedeploy_app.faas.name}-deployment-group"
 	service_role_arn 	  = aws_iam_role.codedeploy_role.arn
 
 	ec2_tag_set {

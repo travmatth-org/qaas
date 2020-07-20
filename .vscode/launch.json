@@ -7,7 +7,12 @@
             "request": "launch",
             "mode": "debug",
             "program": "${workspaceFolder}/cmd/faas/main.go",
-            "args": ["--dev", "--port", "8080", "--static", "${workspaceFolder}/web"]
+            "args": [
+                "--dev",
+                "--port", "8080",
+                "--static",
+                "${workspaceFolder}/web"
+            ]
         }
     ]
 }

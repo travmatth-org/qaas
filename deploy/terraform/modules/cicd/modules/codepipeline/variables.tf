@@ -1,9 +1,5 @@
-variable "codebuild_iam_role" {
-  description = "IAM Role for Codebuild"
-}
-
-variable "repo_name" {
-  description = "Name of the Github repository"
+variable "github_repo" {
+  description = "Github repository hosting the project source"
 }
 
 variable "codepipeline_artifact_bucket" {

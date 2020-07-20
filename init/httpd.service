@@ -1,0 +1,9 @@
+[Unit]
+Descript = Fortunes As A Service HTTP Server
+
+[Service]
+ExecStart = /usr/sbin/httpd --prod
+Restart = always
+KillSignal = SIGQUIT
+Type = NotifyAccess = all
+WorkingDirectory = /srv

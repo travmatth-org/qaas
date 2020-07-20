@@ -6,13 +6,15 @@ phases:
       - make get
   pre_build:
     commands:
-      - make check
+      - make cicd
   build:
     commands:
       - make build
 
 artifacts:
   files:
-    - dist/codedeploy
-    - web/
+    - dist/httpd
+    - web/*
     - build/ci/appspec.yml
+    - scripts/codedeploy/*
+    - init/httpd.service

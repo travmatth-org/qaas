@@ -18,12 +18,8 @@ variable "buildspec_yml" {
 	description = "Location of the buildspec file to use"
 }
 
-variable "repo_name" {
-	description = "Name of the repository"
-}
-
-variable "codebuild_iam_role" {
-  description = "IAM role to use for Codebuild"
+variable "github_repo" {
+	description = "Github repository hosting the source code of the project"
 }
 
 variable "webhook_secret" {

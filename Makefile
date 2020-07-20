@@ -2,11 +2,12 @@
 # make vars
 ###################################################################
 
-APPLICATION := dist/faas
-MAIN := cmd/faas/main.go
-TEST_PORT := ":8080"
-COVERAGE_OUT := coverage.out
-COVERAGE_HTML := coverage.html
+APPLICATION		:= dist/http
+MAIN			:= cmd/faas/main.go
+TEST_PORT		:= ":8080"
+COVERAGE_OUT	:= coverage.out
+COVERAGE_HTML	:= coverage.html
+TF_PLAN			:= infra.tfplan
 
 ###################################################################
 # compiling, runnnig faas in prod, dev
@@ -46,6 +47,17 @@ test: test.clean
 
 check: lint vet test
 
+validate.sysd:
+	@sudo systemd-analyze verify init/httpd.service
+
+cicd: check
+
+test.codebuild:
+	@./test/codebuild_build.sh \
+		-i travmatth/amazonlinux-golang-dev \
+		-b build/ci/buildspec.yml \
+		-a dist/codebuild
+
 ###################################################################
 # generate, view test coverage
 ###################################################################
@@ -64,17 +76,32 @@ coverage.view: test coverage.html
 ###################################################################
 
 tf.init:
-	cd deploy/terraform
-	terraform init
-	cd ..
+	@cd deploy/terraform; \
+	terraform init; \
+	cd ../..;
 
 tf.plan:
-	cd deploy/terraform
-	terraform plan
-	cd ..
+	@cd deploy/terraform; \
+	terraform plan -var-file=".tfvars" -out $(TF_PLAN); \
+	cd ../..;
+
+tf.apply:
+	@cd deploy/terraform; \
+	terraform apply $(TF_PLAN); \
+	cd ../..;
+
+tf.destroy:
+	@cd deploy/terraform; \
+	terraform destroy -var-file=".tfvars"; \
+	cd ../..;
+
+tf.show:
+	@cd deploy/terraform; \
+	terraform show -var-file=".tfvars"; \
+	cd ../..;
 
 ###################################################################
-# misc
+# makefile phony target 
 ###################################################################
 
 .PHONY: default build run clean lint vet test check

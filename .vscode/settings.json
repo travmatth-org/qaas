@@ -3,6 +3,6 @@
     "go.inferGopath": false,
     "go.lintTool":"golangci-lint",
     "go.lintFlags": [
-    "--fast"
+        "--fast"
     ]
 }

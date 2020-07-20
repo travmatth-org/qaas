@@ -2,10 +2,12 @@
 
 set -ex
 
+# update yum, install dependencies
+sudo yum -y update && install ruby wget
+
 # install codedeploy agent
-yum -y update
-yum install -y ruby
 cd /home/ec2-user
-curl -O https://aws-codedeploy-us-west-2.s3.amazonaws.com/latest/install
+wget https://aws-codedeploy-us-west-1.s3.amazonaws.com/latest/install
 chmod +x ./install
-./install auto
+sudo ./intall auto
+sudo service codedeploy-agent status
