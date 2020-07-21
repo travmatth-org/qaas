@@ -16,11 +16,14 @@ data "aws_iam_policy_document" "codedeploy" {
 resource "aws_iam_role" "codedeploy_role" {
 	name				= "faas_codedeploy_role"
 	assume_role_policy	= data.aws_iam_policy_document.codedeploy.json
+	path				= "/"
+	description			= "Allows CodeDeploy to call AWS services"
 }
 
 resource "aws_iam_role_policy_attachment" "codedeploy_attach" {
-	role		= aws_iam_role.codedeploy_role.name
 	policy_arn	= "arn:aws:iam::aws:policy/service-role/AWSCodeDeployRole"
+	role		= aws_iam_role.codedeploy_role.name
+	depends_on	= [aws_iam_role.codedeploy_role]
 }
 
 resource "aws_codedeploy_deployment_group" "deploy" {

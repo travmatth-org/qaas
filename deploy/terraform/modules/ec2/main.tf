@@ -1,20 +1,20 @@
 resource "aws_security_group" "faas_public_http_ssh_sg" {
 	name		= "FaaS Public HTTP/SSH"
 	vpc_id		= var.public_vpc.id
-	description	= "Allow incoming SSH traffic, all egress"
+	description	= "Security group for web that allows web traffic from internet"
+
+	# ingress {
+	# 	protocol = "tcp"
+	# 	from_port = 22
+	# 	to_port = 22
+	# 	cidr_blocks = ["0.0.0.0/0"]
+	# }
 
 	ingress {
-		protocol = "tcp"
+		protocol = "-1"
 		cidr_blocks = ["0.0.0.0/0"]
-		from_port = 22
-		to_port = 22
-	}
-
-	ingress {
-		protocol = "tcp"
-		cidr_blocks = ["0.0.0.0/0"]
-		from_port = 80
-		to_port = 80
+		from_port = 0
+		to_port = 0
 	}
 
 	# allow egress from all ports
@@ -52,6 +52,8 @@ data "aws_iam_policy_document" "faas_service_role" {
 }
 
 resource "aws_iam_role" "faas_service_role" {
+	name				= "EC2InstanceRole"
+	path				= "/"
 	assume_role_policy	= data.aws_iam_policy_document.faas_service_role.json
 
 	tags = {
@@ -60,13 +62,15 @@ resource "aws_iam_role" "faas_service_role" {
 }
 
 resource "aws_iam_role_policy_attachment" "faas_attachment" {
-	role = aws_iam_role.faas_service_role.name
-	policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforAWSCodeDeploy"
+	role		= aws_iam_role.faas_service_role.name
+	policy_arn	= "arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforAWSCodeDeploy"
+	depends_on	= [aws_iam_role.faas_service_role]
 }
 
 resource "aws_iam_instance_profile" "ec2_profile" {
-	name = "faas_service_profile"
-	role = aws_iam_role.faas_service_role.name
+	name		= "faas_service_profile"
+	role		= aws_iam_role.faas_service_role.name
+	depends_on	= [aws_iam_role.faas_service_role]
 }
 
 resource "aws_key_pair" "ec2_key_pair" {

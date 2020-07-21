@@ -93,11 +93,9 @@ tf.destroy:
 
 tf.show:
 	@cd deploy/terraform; \
-	terraform show -var-file=".tfvars"; \
+	terraform show; \
 	cd ../..;
 
-###################################################################
 # makefile phony target 
-###################################################################
 
 .PHONY: default build run clean lint vet test check
