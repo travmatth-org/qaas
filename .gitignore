@@ -30,3 +30,6 @@ cover.html
 **/*.tfstate*
 **/.terraform
 crash.log
+
+# compiled assets
+dist/**/*
