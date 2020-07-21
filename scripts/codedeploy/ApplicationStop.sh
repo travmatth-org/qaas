@@ -1,7 +1,5 @@
-#!/bin/bash
+#!/bin/bash -xe
 
-set -ex
-
-if ( sudo systemctl status launchpad | grep active ); then \
-	sudo systemctl stop launchpad;
+if ( sudo systemctl status httpd | grep active ); then \
+	sudo systemctl stop httpd;
 fi

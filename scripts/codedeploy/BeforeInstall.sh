@@ -1,5 +1,4 @@
-#!/bin/bash
+#!/bin/bash -xe
 
-set -ex
-
-sudo rm -rf /usr/sbin/http
+sudo rm -f /usr/sbin/httpd
+unzip /srv/assets.zip -d /srv

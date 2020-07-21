@@ -9,12 +9,9 @@ phases:
       - make cicd
   build:
     commands:
-      - make build
+      - make build.all
 
 artifacts:
   files:
-    - dist/httpd
-    - web/*
-    - build/ci/appspec.yml
-    - scripts/codedeploy/*
-    - init/httpd.service
+    - dist/*
+  discard-paths: yes

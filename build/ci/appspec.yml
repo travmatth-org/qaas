@@ -2,21 +2,21 @@ version: 0.0
 os: linux
 
 files:
-  - source: dist/httpd
+  - source: httpd
     destination: /usr/sbin
-  - source: init/httpd.service
+  - source: httpd.service
     destination: /usr/lib/systemd/system
-  - source: web/
+  - source: assets.zip
     destination: /srv
 
 hoooks:
   BeforeInstall:
-    - location: scripts/codedeploy/BeforeInstall.sh
+    - location: BeforeInstall.sh
   AfterInstall:
-    - location: scripts/codedeploy/AfterInstall.sh
+    - location: AfterInstall.sh
   ApplicationStop:
-    - location: scripts/codedeploy/ApplicationStop.sh
+    - location: ApplicationStop.sh
   ApplicationStart:
-    - location: scripts/codedeploy/ApplicationStart.sh
+    - location: ApplicationStart.sh
   ValidateService:
-    - location: scripts/codedeploy/ValidateService.sh
+    - location: ValidateService.sh

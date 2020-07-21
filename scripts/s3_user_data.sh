@@ -1,9 +1,11 @@
-#!/bin/bash
-
-set -ex
+#!/bin/bash -xe
+# send script output to /tmp/userdata.log for debugging
+exec >> /tmp/userdata.log 2>&1
 
 # update yum, install dependencies
-sudo yum -y update && install ruby wget
+sudo yum -y update
+sudo yum -y install ruby
+sudo yum -y install wget
 
 # install codedeploy agent
 cd /home/ec2-user

@@ -1,6 +1,4 @@
-###################################################################
 # make vars
-###################################################################
 
 APPLICATION		:= dist/http
 MAIN			:= cmd/faas/main.go
@@ -9,14 +7,18 @@ COVERAGE_OUT	:= coverage.out
 COVERAGE_HTML	:= coverage.html
 TF_PLAN			:= infra.tfplan
 
-###################################################################
-# compiling, runnnig faas in prod, dev
-###################################################################
+# runnnig faas for dev and compiling for production
 
 default: build
 
 build: clean $(MAIN)
 	@go build -o $(APPLICATION) $(MAIN)
+
+build.all: build
+	@zip dist/assets.zip web/*
+	@cp init/httpd.service dist
+	@cp build/ci/* dist
+	@cp scripts/codedeploy/* dist/
 
 run: build
 	@-./$(APPLICATION) --port $(TEST_PORT) --static web --dev
@@ -24,9 +26,7 @@ run: build
 get: $(MAIN)
 	@go get -v -t -d ./...
 
-###################################################################
 # cleaning, linting, checking and testing faas
-###################################################################
 
 clean:
 	@rm -f $(APPLICATION)
@@ -58,9 +58,7 @@ test.codebuild:
 		-b build/ci/buildspec.yml \
 		-a dist/codebuild
 
-###################################################################
 # generate, view test coverage
-###################################################################
 
 coverage:
 	@go test -v ./... -coverprofile $(COVERAGE_OUT)
@@ -71,9 +69,7 @@ coverage.html: coverage
 coverage.view: test coverage.html
 	@open $(COVERAGE_HTML)
 
-###################################################################
 # terraform
-###################################################################
 
 tf.init:
 	@cd deploy/terraform; \
