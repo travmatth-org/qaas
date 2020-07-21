@@ -1,9 +1,29 @@
 [Unit]
-Descript = Fortunes As A Service HTTP Server
+Description = Fortunes As A Service HTTP Server
+ConditionPathExists=/usr/sbin/httpd
+After=network.target
 
 [Service]
-ExecStart = /usr/sbin/httpd --prod
-Restart = always
-KillSignal = SIGQUIT
-Type = NotifyAccess = all
+Type=simple
+User=faas
+Group=faas
+LimitNOFILE=1024
+
+Restart=on-failure
+RestartSec=10
+StartLimitIntervalSec=60
+
 WorkingDirectory = /srv
+ExecStart = /usr/sbin/httpd --prod
+KillSignal = SIGQUIT
+
+PermissionsStartOnly=true
+ExecStartPre=/bin/mkdir -p /var/log/faas
+ExecStartPre=/bin/chown syslog:adm /var/log/faas
+ExecStartPre=/bin/chmod 755 /var/log/faas
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=faas
+
+[Install]
+WantedBy=multi-user.target
