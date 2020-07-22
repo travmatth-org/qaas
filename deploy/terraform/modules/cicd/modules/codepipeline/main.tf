@@ -67,7 +67,7 @@ resource "aws_codepipeline" "codepipeline" {
     name = "Source"
 
     action {
-      name             = "Git"
+      name             = "Source"
       category         = "Source"
       owner            = "ThirdParty"
       provider         = "GitHub"

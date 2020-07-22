@@ -69,7 +69,7 @@ coverage.html: coverage
 coverage.view: test coverage.html
 	@open $(COVERAGE_HTML)
 
-# terraform
+# terraform commands
 
 tf.init:
 	@cd deploy/terraform; \
