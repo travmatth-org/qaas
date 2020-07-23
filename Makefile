@@ -61,39 +61,44 @@ test.codebuild:
 # generate, view test coverage
 
 coverage:
-	@go test -v ./... -coverprofile $(COVERAGE_OUT)
+	go test -v ./... -coverprofile $(COVERAGE_OUT)
 
 coverage.html: coverage
-	@go tool cover -html=$(COVERAGE_OUT) -o $(COVERAGE_HTML)
+	go tool cover -html=$(COVERAGE_OUT) -o $(COVERAGE_HTML)
 
 coverage.view: test coverage.html
-	@open $(COVERAGE_HTML)
+	open $(COVERAGE_HTML)
 
 # terraform commands
 
 tf.init:
-	@cd deploy/terraform; \
+	cd deploy/terraform; \
 	terraform init; \
 	cd ../..;
 
 tf.plan:
-	@cd deploy/terraform; \
+	cd deploy/terraform; \
 	terraform plan -var-file=".tfvars" -out $(TF_PLAN); \
 	cd ../..;
 
 tf.apply:
-	@cd deploy/terraform; \
+	cd deploy/terraform; \
 	terraform apply $(TF_PLAN); \
 	cd ../..;
 
 tf.destroy:
-	@cd deploy/terraform; \
+	cd deploy/terraform; \
 	terraform destroy -var-file=".tfvars"; \
 	cd ../..;
 
 tf.show:
-	@cd deploy/terraform; \
+	cd deploy/terraform; \
 	terraform show; \
+	cd ../..;
+
+tf.show.eip:
+	cd deploy/terraform; \
+	terraform state show 'module.ec2.aws_eip.faas_eip'; \
 	cd ../..;
 
 # makefile phony target 
