@@ -146,17 +146,20 @@ resource "aws_codepipeline_webhook" "faas" {
 		json_path     = "$.ref"
 		match_equals  = "refs/heads/{Branch}"
 	}
+
+  tags = {
+    FaaS = "true"
+  }
 }
 
 resource "github_repository_webhook" "faas" {
   repository = var.github_repo.name
+  events = ["push"]
 
   configuration {
     url          = aws_codepipeline_webhook.faas.url
-    content_type = "form"
+    content_type = "json"
     insecure_ssl = true
     secret       = var.webhook_secret
   }
-
-  events = ["push"]
 }
