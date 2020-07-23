@@ -42,7 +42,7 @@ resource "aws_ssm_parameter" "github_oauth_token" {
   name        = "/faas/ci/github_oauth_token"
   description = "GitHub OAuth Token"
   type        = "SecureString"
-  value       = "var.github_oauth_token"
+  value       = var.github_oauth_token
 
   tags        = {
     FaaS      = "true"

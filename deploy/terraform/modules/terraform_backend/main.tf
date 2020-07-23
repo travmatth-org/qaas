@@ -1,9 +1,9 @@
 resource "aws_s3_bucket" "tf_state_bucket" {
   bucket = "faas-terraform-state-bucket-${var.aws_account_id}"
 
-  # lifecycle {
-  #   prevent_destroy = true
-  # }
+  lifecycle {
+    prevent_destroy = true
+  }
 
   server_side_encryption_configuration {
     rule {
@@ -26,9 +26,9 @@ resource "aws_s3_bucket" "tf_state_bucket" {
 resource "aws_s3_bucket" "codebuild_logging_bucket" {
   bucket = "faas-codebuild-logging-bucket-${var.aws_account_id}"
 
-  # lifecycle {
-  #   prevent_destroy = true
-  # }
+  lifecycle {
+    prevent_destroy = true
+  }
 
   server_side_encryption_configuration {
     rule {
@@ -47,9 +47,9 @@ resource "aws_s3_bucket" "codebuild_logging_bucket" {
 resource "aws_s3_bucket" "codepipeline_artifact_bucket" {
   bucket = "faas-codepipeline-artifact-bucket-${var.aws_account_id}"
 
-  # lifecycle {
-  #   prevent_destroy = true
-  # }
+  lifecycle {
+    prevent_destroy = true
+  }
 
   server_side_encryption_configuration {
     rule {

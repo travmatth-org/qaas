@@ -1,6 +1,6 @@
 # make vars
 
-APPLICATION		:= dist/http
+APPLICATION		:= dist/httpd
 MAIN			:= cmd/faas/main.go
 TEST_PORT		:= ":8080"
 COVERAGE_OUT	:= coverage.out
