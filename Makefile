@@ -12,48 +12,48 @@ TF_PLAN			:= infra.tfplan
 default: build
 
 build: clean $(MAIN)
-	@go build -o $(APPLICATION) $(MAIN)
+	go build -o $(APPLICATION) $(MAIN)
 
 build.all: build
-	@zip dist/assets.zip web/*
-	@cp init/httpd.service dist
-	@cp build/ci/* dist
-	@cp scripts/codedeploy/* dist/
+	zip -r dist/assets.zip web/
+	cp init/httpd.service dist
+	cp build/ci/* dist
+	cp scripts/codedeploy/* dist/
 
 run: build
-	@-./$(APPLICATION) --port $(TEST_PORT) --static web --dev
+	./$(APPLICATION) --port $(TEST_PORT) --static web --dev
 
 get: $(MAIN)
-	@go get -v -t -d ./...
+	go get -v -t -d ./...
 
 # cleaning, linting, checking and testing faas
 
 clean:
-	@rm -f $(APPLICATION)
-	@go clean $(MAIN)
-	@rm -f $(COVERAGE_OUT) $(COVERAGE_HTML)
+	rm -rf dist
+	go clean $(MAIN)
+	rm -f $(COVERAGE_OUT) $(COVERAGE_HTML)
 
 lint:
-	@golint -set_exit_status ./...
+	golint -set_exit_status ./...
 
 vet:
-	@go vet $(MAIN)
+	go vet $(MAIN)
 
 test.clean: clean
-	@go clean -testcache $(MAIN)
+	go clean -testcache $(MAIN)
 
 test: test.clean
-	@go test -v ./...
+	go test -v ./...
 
 check: lint vet test
 
 validate.sysd:
-	@sudo systemd-analyze verify init/httpd.service
+	sudo systemd-analyze verify init/httpd.service
 
 cicd: check
 
 test.codebuild:
-	@./test/codebuild_build.sh \
+	./test/codebuild_build.sh \
 		-i travmatth/amazonlinux-golang-dev \
 		-b build/ci/buildspec.yml \
 		-a dist/codebuild
