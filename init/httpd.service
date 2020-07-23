@@ -14,12 +14,12 @@ RestartSec=10
 StartLimitIntervalSec=60
 
 WorkingDirectory = /srv
-ExecStart = /usr/sbin/httpd --prod
+ExecStart = ./usr/sbin/httpd --prod
 KillSignal = SIGQUIT
 
 PermissionsStartOnly=true
 ExecStartPre=/bin/mkdir -p /var/log/faas
-ExecStartPre=/bin/chown syslog:adm /var/log/faas
+ExecStartPre=/bin/chown faas /var/log/faas
 ExecStartPre=/bin/chmod 755 /var/log/faas
 StandardOutput=syslog
 StandardError=syslog

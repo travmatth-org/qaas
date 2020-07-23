@@ -1,5 +1,6 @@
-#!/bin/bash
+#!/bin/bash -xe
 
-set -ex
+# send script output to /tmp/ValidateService.log for debugging
+exec >> /tmp/ValidateService.log 2>&1
 
 systemctl is-active --quiet httpd
