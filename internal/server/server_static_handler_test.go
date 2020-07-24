@@ -10,7 +10,7 @@ import (
 
 func TestServer_ServeStatic(t *testing.T) {
 	_, s := configureServer(t)
-	html := s.GetIndexHTML()
+	html := "../../web/www/static/index.html"
 	req, err := http.NewRequest("GET", "/", nil)
 	if err != nil {
 		t.Fatal("Error in test while creating request", err)

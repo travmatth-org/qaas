@@ -36,7 +36,7 @@ func configureServer(t *testing.T) (*bytes.Buffer, *Server) {
 	c := config.New()
 	// listen on loopback interface only
 	c.Port = LoopbackTestPort
-	c.Static = "../../web"
+	c.Static = "../../web/www/static"
 	s := New(c)
 	s.RegisterHandlers()
 	return logged, s
@@ -82,8 +82,8 @@ func TestServer_HomeAnd404Routes(t *testing.T) {
 		endpoint string
 		file     string
 	}{
-		{"TestHomeRoute", "/", s.GetIndexHTML()},
-		{"Test404Route", "/foobar", s.Get404()},
+		{"TestHomeRoute", "/", "../../web/www/static/index.html"},
+		{"Test404Route", "/foobar", "../../web/www/static/404.html"},
 	}
 
 	for _, tt := range tests {
@@ -100,7 +100,7 @@ func TestServer_HomeAnd404Routes(t *testing.T) {
 			if err != nil {
 				t.Fatal("Error in test while reading request to []byte: ", err)
 			} else if !bytes.Equal(got, want) {
-				t.Fatal("Error incorrect body returned for: ", tt.endpoint, tt.file)
+				t.Fatal("Error incorrect body returned for: ", tt.endpoint, tt.file, "\n", string(got), "\n", string(want))
 			}
 		})
 	}

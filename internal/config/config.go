@@ -2,12 +2,14 @@ package config
 
 import (
 	"flag"
+	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/Travmatth/faas/internal/logger"
 )
 
 const (
-	defaultRoot         = "/srv/www/static"
 	defaultIP           = "0.0.0.0"
 	defaultPort         = ":80"
 	defaultReadTimeout  = 5
@@ -33,10 +35,11 @@ type Config struct {
 }
 
 // New construct and returns a config with default values,
-// for use in testing server
+// for use in testing server. Static dir defaults to dev value,
+// Build() will overwrite with cwd
 func New() *Config {
 	return &Config{
-		Static:       defaultRoot,
+		Static:       filepath.Join("web", "www", "static"),
 		IP:           defaultIP,
 		Port:         defaultPort,
 		ReadTimeout:  defaultReadTimeout,
@@ -49,9 +52,13 @@ func New() *Config {
 
 // Build uses `flag` package to build and return config struct.
 func Build() *Config {
-	message := "Directory static assets served from"
-	static := flag.String("static", defaultRoot, message)
-	message = "ip server should listen on"
+	cwd, err := os.Getwd()
+	if err != nil {
+		logger.Error().Err(err).Msg("Error initializing configuration")
+		return nil
+	}
+	cwd = filepath.Join(cwd, "web", "www", "static")
+	message := "ip server should listen on"
 	ip := flag.String("ip", defaultIP, message)
 	message = "Port server should listen on"
 	port := flag.String("port", defaultPort, message)
@@ -69,7 +76,7 @@ func Build() *Config {
 	flag.Parse()
 
 	return &Config{
-		*static, *ip, *port, *readTimeout, *writeTimeout,
+		cwd, *ip, *port, *readTimeout, *writeTimeout,
 		*stopTimeout, *idleTimeout, *dev,
 	}
 }

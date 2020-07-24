@@ -29,8 +29,13 @@ func TestConfig(t *testing.T) {
 	old := os.Args
 	os.Args = []string{"faas"}
 	defer func() { os.Args = old }()
+	cwd, _ := os.Getwd()
+	cwd = filepath.Join(cwd, "web", "www", "static")
 
 	c := Build()
+	if c == nil {
+		t.Fatal("Error building configuration")
+	}
 
 	tests := []struct {
 		name   string
@@ -71,13 +76,13 @@ func TestConfig(t *testing.T) {
 		{
 			"TestGetIndexHTML",
 			method{mockTime, c.GetIndexHTML, mockBool},
-			want{time.Duration(0), filepath.Join(defaultRoot, "index.html"), false},
+			want{time.Duration(0), filepath.Join(cwd, "index.html"), false},
 			"string",
 		},
 		{
 			"TestGet404",
 			method{mockTime, c.Get404, mockBool},
-			want{time.Duration(0), filepath.Join(defaultRoot, "404.html"), false},
+			want{time.Duration(0), filepath.Join(cwd, "404.html"), false},
 			"string",
 		},
 		{
