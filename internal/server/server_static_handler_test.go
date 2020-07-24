@@ -16,7 +16,7 @@ func TestServer_ServeStatic(t *testing.T) {
 		t.Fatal("Error in test while creating request", err)
 	}
 	rr := httptest.NewRecorder()
-	s.ServeStatic(html).ServeHTTP(rr, req)
+	s.Router.ServeHTTP(rr, req)
 
 	ref, err := ioutil.ReadFile(html)
 	if err != nil {
