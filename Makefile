@@ -92,5 +92,8 @@ tf.show.eip:
 	@$(MAKE) show.eip -C deploy/terraform
 
 # makefile phony target 
-
-.PHONY: default build run clean lint vet test check
+.PHONY: default build build.all run get clean \
+	lint vet test.clean test check validate.sysd cicd \
+	test.codebuild coverage coverage.html coverage.view \
+	tf.init tf.plan tf.apply tf.destroy tf.destroy.ec2 \
+	tf.show tf.show.eip
