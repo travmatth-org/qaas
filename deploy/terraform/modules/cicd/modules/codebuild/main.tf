@@ -89,7 +89,7 @@ resource "aws_codebuild_project" "faas_project" {
 
   source {
     type      = "CODEPIPELINE"
-    buildspec = file("../../build/ci/buildspec.yml")
+    buildspec = file("../../buildspec.yml")
   }
 
   tags = {
