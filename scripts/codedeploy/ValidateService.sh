@@ -1,4 +1,4 @@
-#!/bin/bash -xe
+#!/bin/bash -eux pipefail
 
 # send script output to /tmp/ValidateService.log for debugging
 exec >> /tmp/ValidateService.log 2>&1

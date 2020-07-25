@@ -15,6 +15,9 @@ destroy:
 destroy.ec2:
 	terraform destroy -target "module.ec2" -var-file=.tfvars;
 
+destroy.cicd:
+	terraform destroy -target "module.cicd" -var-file=.tfvars;
+
 show:
 	terraform show;
 

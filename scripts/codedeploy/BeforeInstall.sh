@@ -1,4 +1,4 @@
-#!/bin/bash -xe
+#!/bin/bash -eux pipefail
 
 # send script output to /tmp/BeforeInstall.log for debugging
 exec >> /tmp/BeforeInstall.log 2>&1

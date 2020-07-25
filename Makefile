@@ -85,6 +85,9 @@ tf.destroy:
 tf.destroy.ec2:
 	@$(MAKE) destroy.ec2 -C deploy/terraform
 
+tf.destroy.cicd:
+	@$(MAKE) destroy.cicd -C deploy/terraform
+
 tf.show:
 	@$(MAKE) show -C deploy/terraform
 

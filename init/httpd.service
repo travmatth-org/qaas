@@ -13,8 +13,8 @@ Restart=on-failure
 RestartSec=10
 StartLimitIntervalSec=60
 
-WorkingDirectory = /srv
-ExecStart = ./usr/sbin/httpd --prod
+WorkingDirectory = /srv/www
+ExecStart = /usr/sbin/./httpd --prod
 KillSignal = SIGQUIT
 
 PermissionsStartOnly=true
