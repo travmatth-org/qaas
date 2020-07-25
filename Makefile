@@ -5,7 +5,6 @@ MAIN			:= cmd/faas/main.go
 TEST_PORT		:= ":8080"
 COVERAGE_OUT	:= coverage.out
 COVERAGE_HTML	:= coverage.html
-TF_PLAN			:= infra.tfplan
 
 # runnnig faas for dev and compiling for production
 
@@ -72,34 +71,25 @@ coverage.view: test coverage.html
 # terraform commands
 
 tf.init:
-	cd deploy/terraform; \
-	terraform init; \
-	cd ../..;
+	@$(MAKE) init -C deploy/terraform
 
 tf.plan:
-	cd deploy/terraform; \
-	terraform plan -var-file=".tfvars" -out $(TF_PLAN); \
-	cd ../..;
+	@$(MAKE) plan -C deploy/terraform
 
 tf.apply:
-	cd deploy/terraform; \
-	terraform apply $(TF_PLAN); \
-	cd ../..;
+	@$(MAKE) apply -C deploy/terraform
 
 tf.destroy:
-	cd deploy/terraform; \
-	terraform destroy -var-file=".tfvars"; \
-	cd ../..;
+	@$(MAKE) destroy -C deploy/terraform
+
+tf.destroy.ec2:
+	@$(MAKE) destroy.ec2 -C deploy/terraform
 
 tf.show:
-	cd deploy/terraform; \
-	terraform show; \
-	cd ../..;
+	@$(MAKE) show -C deploy/terraform
 
 tf.show.eip:
-	cd deploy/terraform; \
-	terraform state show 'module.ec2.aws_eip.faas_eip'; \
-	cd ../..;
+	@$(MAKE) show.eip -C deploy/terraform
 
 # makefile phony target 
 
