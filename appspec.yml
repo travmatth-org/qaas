@@ -11,12 +11,12 @@ files:
 
 hoooks:
   BeforeInstall:
-    - location: BeforeInstall.sh
+    - location: scripts/codedeploy/BeforeInstall.sh
   AfterInstall:
-    - location: AfterInstall.sh
+    - location: scripts/codedeploy/AfterInstall.sh
   ApplicationStop:
-    - location: ApplicationStop.sh
+    - location: scripts/codedeploy/ApplicationStop.sh
   ApplicationStart:
-    - location: ApplicationStart.sh
+    - location: scripts/codedeploy/ApplicationStart.sh
   ValidateService:
-    - location: ValidateService.sh
+    - location: scripts/codedeploy/ValidateService.sh
