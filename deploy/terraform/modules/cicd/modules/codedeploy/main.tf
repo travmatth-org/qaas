@@ -26,7 +26,7 @@ resource "aws_iam_role_policy_attachment" "codedeploy_attach" {
 	depends_on	= [aws_iam_role.codedeploy_role]
 }
 
-resource "aws_codedeploy_deployment_group" "deploy" {
+resource "aws_codedeploy_deployment_group" "faas_in_place" {
 	app_name 			  = aws_codedeploy_app.faas.name
 	deployment_group_name = "${aws_codedeploy_app.faas.name}-deployment-group"
 	service_role_arn 	  = aws_iam_role.codedeploy_role.arn
@@ -37,5 +37,9 @@ resource "aws_codedeploy_deployment_group" "deploy" {
 			key   = "FaaS"
 			value = "Service"
 		}
+	}
+
+	deployment_style {
+		deployment_type = "IN_PLACE"
 	}
 }
