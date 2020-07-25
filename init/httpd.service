@@ -13,13 +13,13 @@ Restart=on-failure
 RestartSec=10
 
 WorkingDirectory = /srv/www
-ExecStart = /usr/sbin/./httpd --prod
+ExecStart = /usr/sbin/httpd
 KillSignal = SIGQUIT
 
 PermissionsStartOnly=true
-ExecStartPre=sudo /bin/mkdir -p /var/log/faas
-ExecStartPre=sudo /bin/chown faas /var/log/faas
-ExecStartPre=sudo /bin/chmod 755 /var/log/faas
+ExecStartPre=/bin/mkdir -p /var/log/faas
+ExecStartPre=/bin/chown faas /var/log/faas
+ExecStartPre=/bin/chmod 755 /var/log/faas
 StandardOutput=syslog
 StandardError=syslog
 SyslogIdentifier=faas

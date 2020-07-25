@@ -11,17 +11,17 @@ files:
 
 hoooks:
   BeforeInstall:
-    - location: scripts/codedeploy/BeforeInstall.sh
+    - location: BeforeInstall.sh
       timeout: 30
   AfterInstall:
-    - location: scripts/codedeploy/AfterInstall.sh
+    - location: AfterInstall.sh
       timeout: 30
   ApplicationStop:
-    - location: scripts/codedeploy/ApplicationStop.sh
+    - location: ApplicationStop.sh
       timeout: 30
   ApplicationStart:
-    - location: scripts/codedeploy/ApplicationStart.sh
+    - location: ApplicationStart.sh
       timeout: 30
   ValidateService:
-    - location: scripts/codedeploy/ValidateService.sh
+    - location: ValidateService.sh
       timeout: 30
