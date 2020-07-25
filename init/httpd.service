@@ -17,9 +17,9 @@ ExecStart = /usr/sbin/./httpd --prod
 KillSignal = SIGQUIT
 
 PermissionsStartOnly=true
-ExecStartPre=/bin/mkdir -p /var/log/faas
-ExecStartPre=/bin/chown faas /var/log/faas
-ExecStartPre=/bin/chmod 755 /var/log/faas
+ExecStartPre=sudo /bin/mkdir -p /var/log/faas
+ExecStartPre=sudo /bin/chown faas /var/log/faas
+ExecStartPre=sudo /bin/chmod 755 /var/log/faas
 StandardOutput=syslog
 StandardError=syslog
 SyslogIdentifier=faas
