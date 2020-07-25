@@ -1,4 +1,6 @@
-#!/bin/bash -eux pipefail
+#!/bin/bash
+
+set -eux pipefail
 
 # send script output to /tmp/AfterInstall.log for debugging
 exec >> /tmp/AfterInstall.log 2>&1
