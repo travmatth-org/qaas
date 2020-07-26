@@ -9,19 +9,24 @@ files:
   - source: ./assets.zip
     destination: /srv
 
+permissions:
+  - object: /
+    pattern: "*.sh"
+    mode: 744
+
 hoooks:
   BeforeInstall:
     - location: BeforeInstall.sh
-      timeout: 30
+      timeout: 10
   AfterInstall:
     - location: AfterInstall.sh
-      timeout: 30
+      timeout: 10
   ApplicationStop:
     - location: ApplicationStop.sh
-      timeout: 30
+      timeout: 10
   ApplicationStart:
     - location: ApplicationStart.sh
-      timeout: 30
+      timeout: 10
   ValidateService:
     - location: ValidateService.sh
-      timeout: 30
+      timeout: 10
