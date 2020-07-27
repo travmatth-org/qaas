@@ -13,6 +13,12 @@ permissions:
   - object: /
     pattern: "*.sh"
     mode: 744
+    owner: faas
+    group: faas
+  - object: httpd
+    mode: 744
+    owner: faas
+    group: faas
 
 hoooks:
   BeforeInstall:

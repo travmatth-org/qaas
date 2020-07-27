@@ -1,5 +1,5 @@
-#!/bin/bash -xe
-
+#!/bin/bash
+set -eux pipefail
 # send script output to /tmp/user_data.log for debugging
 exec >> /tmp/user_data.log 2>&1
 
@@ -16,3 +16,5 @@ sudo service codedeploy-agent status
 
 # create user for faas service
 sudo useradd -s /sbin/nologin -M faas
+# create dirs for static content
+sudo mkdir -p web/www/static

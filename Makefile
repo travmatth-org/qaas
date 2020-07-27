@@ -34,6 +34,7 @@ clean:
 
 lint:
 	golint -set_exit_status ./...
+	shellcheck $(shell find . -type f -name "*.sh" -not -path "*vendor*")
 
 vet:
 	go vet $(MAIN)
@@ -52,7 +53,7 @@ validate.sysd:
 cicd: check
 
 test.codebuild:
-	./test/codebuild_build.sh \
+	./vendor/codebuild_build.sh \
 		-i travmatth/amazonlinux-golang-dev \
 		-b build/ci/buildspec.yml \
 		-a dist/codebuild

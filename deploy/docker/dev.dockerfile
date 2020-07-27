@@ -101,10 +101,15 @@ RUN mkdir $HOME/workspace \
     && rm ${TERRAFORM_PACKAGE} \
     && mv terraform /usr/local/bin \
     #
+    # Install shellcheck
+    && wget -c 'https://github.com/koalaman/shellcheck/releases/download/stable/shellcheck-stable.linux.x86_64.tar.xz' \
+        --no-check-certificate -O - | tar -xvJ -C /tmp/ \
+    && mv /tmp/shellcheck-stable/shellcheck /usr/bin/ \
+    #
     # Clean up
     && yum autoremove -y \
     && yum clean packages \
-    && rm -rf /var/lib/apt/lists/* /tmp/gotools
+    && rm -rf /var/lib/apt/lists/* /tmp/gotools /tmp/shellcheck-stable
 
 # Update this to "on" or "off" as appropriate
 ENV GO111MODULE=auto
