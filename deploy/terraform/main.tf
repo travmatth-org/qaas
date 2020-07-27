@@ -73,7 +73,6 @@ module "cicd" {
   tf_state_bucket              = module.tf_backend.tf_state_bucket
   codepipeline_artifact_bucket = module.tf_backend.codepipeline_artifact_bucket
   dynamodb_lock_state_table    = module.tf_backend.dynamodb_lock_state_table
-  buildspec_yml                = "${path.cwd}/build/ci/buildspec.yml"
   github_repo                  = data.github_repository.faas
 }
 

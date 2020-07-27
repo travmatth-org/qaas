@@ -14,10 +14,6 @@ variable "dynamodb_lock_state_table" {
   description = "DynamoDB table controlling lock state"
 }
 
-variable "buildspec_yml" {
-	description = "Location of the buildspec file to use"
-}
-
 variable "github_repo" {
 	description = "Github repository hosting the source code of the project"
 }

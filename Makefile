@@ -16,7 +16,7 @@ build: clean $(MAIN)
 build.all: build
 	zip -r dist/assets.zip web/
 	cp init/httpd.service dist
-	cp *.yml dist
+	cp build/cicd/appspec.yml dist
 	cp scripts/codedeploy/* dist/
 
 run: build
@@ -55,7 +55,7 @@ cicd: check
 test.codebuild:
 	./vendor/codebuild_build.sh \
 		-i travmatth/amazonlinux-golang-dev \
-		-b build/ci/buildspec.yml \
+		-b build/cicd/buildspec.yml \
 		-a dist/codebuild
 
 # generate, view test coverage
