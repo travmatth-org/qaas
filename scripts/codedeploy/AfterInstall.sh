@@ -4,7 +4,7 @@ set -eux pipefail
 # 	exec 5>> >(logger -t $0)
 # fi
 # send script output to /tmp/AfterInstall.log for debugging
-exec >> /tmp/AfterInstall.log 2>&1
+# exec >> /tmp/AfterInstall.log 2>&1
 
 # give service appropriate permissions
 sudo chmod 755 /usr/sbin/httpd
