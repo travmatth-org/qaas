@@ -1,0 +1,1 @@
+variable "codepipeline_artifact_bucket" {}

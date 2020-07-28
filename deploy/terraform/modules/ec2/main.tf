@@ -79,7 +79,7 @@ resource "aws_key_pair" "ec2_key_pair" {
 }
 
 resource "aws_instance" "faas_service" {
-	ami =  data.aws_ami.amazonlinux2.id
+	ami						=  data.aws_ami.amazonlinux2.id
 	instance_type			= "t2.micro"
 	vpc_security_group_ids	= [aws_security_group.faas_public_http_ssh_sg.id]
 	subnet_id				= var.public_subnet.id
@@ -89,7 +89,7 @@ resource "aws_instance" "faas_service" {
 	user_data				= file("../../scripts/s3_user_data.sh")
 
 	tags = {
-		FaaS = "Service"
+		faas = "SERVICE"
 	}
 }
 

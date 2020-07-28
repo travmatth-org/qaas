@@ -20,10 +20,32 @@ resource "aws_iam_role" "codedeploy_role" {
 	description			= "Allows CodeDeploy to call AWS services"
 }
 
+resource "aws_iam_role_policy" "codedeploy" {
+	name = "FaasRolePolicy"
+	role = aws_iam_role.codedeploy_role.name
+	policy = <<-POLICY
+		{
+			"Version": "2012-10-17",
+			"Statement": [
+				{
+					"Action": [
+						"s3:Get*",
+						"s3:List*"
+					],
+					"Effect": "Allow",
+					"Resource": [
+						"${var.codepipeline_artifact_bucket.arn}/*",
+						"arn:aws:s3:::aws-codedeploy-us-west-1/*"
+					]
+				}
+			]
+		}
+		POLICY
+}
+
 resource "aws_iam_role_policy_attachment" "codedeploy_attach" {
 	policy_arn	= "arn:aws:iam::aws:policy/service-role/AWSCodeDeployRole"
 	role		= aws_iam_role.codedeploy_role.name
-	depends_on	= [aws_iam_role.codedeploy_role]
 }
 
 resource "aws_codedeploy_deployment_group" "faas_in_place" {
@@ -34,8 +56,8 @@ resource "aws_codedeploy_deployment_group" "faas_in_place" {
 	ec2_tag_set {
 		ec2_tag_filter {
 			type  = "KEY_AND_VALUE"	
-			key   = "FaaS"
-			value = "Service"
+			key   = "faas"
+			value = "SERVICE"
 		}
 	}
 
