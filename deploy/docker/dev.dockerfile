@@ -41,7 +41,7 @@ RUN mkdir $HOME/workspace \
     # Install tools for aws, go, dev
     && yum -y install \
         zsh git openssh-client less iproute2 procps curl unzip \
-        lsb-release zip aws-cli gzip tar git sudo gcc make \
+        lsb-release zip aws-cli gzip tar git sudo gcc make wget xz \
     #
     # Create a non-root user to use if preferred - see https://aka.ms/vscode-remote/containers/non-root-user.
     && groupadd --gid $USER_GID $USERNAME \
@@ -103,7 +103,7 @@ RUN mkdir $HOME/workspace \
     #
     # Install shellcheck
     && wget -c 'https://github.com/koalaman/shellcheck/releases/download/stable/shellcheck-stable.linux.x86_64.tar.xz' \
-        --no-check-certificate -O - | tar -xvJ -C /tmp/ \
+            --no-check-certificate -O - | tar -xvJ -C /tmp/ \
     && mv /tmp/shellcheck-stable/shellcheck /usr/bin/ \
     #
     # Clean up
