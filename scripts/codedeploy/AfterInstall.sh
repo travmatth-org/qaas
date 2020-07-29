@@ -1,5 +1,6 @@
 #!/bin/bash
-set -eux pipefail
+echo "AfterInstall.sh" | systemd-cat
+# set -eux pipefail
 # if [[ $HOST =~ "*compute\.internal$" ]]; then
 # 	exec 5>> >(logger -t $0)
 # fi
@@ -7,10 +8,10 @@ set -eux pipefail
 # exec >> /tmp/AfterInstall.log 2>&1
 
 # give service appropriate permissions
-sudo chmod 755 /usr/sbin/httpd
+# sudo chmod 755 /usr/sbin/httpd
 
-# allow service to run on privileged port
-sudo setcap 'cap_net_bind_service=+ep' /usr/sbin/httpd
+# # allow service to run on privileged port
+# sudo setcap 'cap_net_bind_service=+ep' /usr/sbin/httpd
 
-# enable faas service
-sudo systemctl enable httpd
+# # enable faas service
+# sudo systemctl enable httpd
