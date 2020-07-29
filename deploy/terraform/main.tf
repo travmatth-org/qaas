@@ -85,4 +85,5 @@ module "ec2" {
   public_vpc       = module.network.public_vpc
   public_subnet    = module.network.public_subnet
   internet_gateway = module.network.internet_gateway
+  codepipeline_artifact_bucket = module.tf_backend.codepipeline_artifact_bucket
 }

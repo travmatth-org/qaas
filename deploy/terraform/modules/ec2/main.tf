@@ -40,37 +40,51 @@ data "aws_ami" "amazonlinux2" {
     }
 }
 
-data "aws_iam_policy_document" "faas_service_role" {
+data "aws_iam_policy_document" "assume_ec2" {
 	statement {
-		effect = "Allow"
+		actions   = ["sts:AssumeRole"]
+		effect    = "Allow"
+
 		principals {
 			type = "Service"
-			identifiers	= ["ec2.amazonaws.com"]
+			identifiers = ["ec2.amazonaws.com"]
 		}
-		actions = ["sts:AssumeRole"]
 	}
 }
 
-resource "aws_iam_role" "faas_service_role" {
+resource "aws_iam_role" "ec2" {
 	name				= "EC2InstanceRole"
-	path				= "/"
-	assume_role_policy	= data.aws_iam_policy_document.faas_service_role.json
+	assume_role_policy	= data.aws_iam_policy_document.assume_ec2.json
 
 	tags = {
 		FaaS = "true"
 	}
 }
 
-resource "aws_iam_role_policy_attachment" "faas_attachment" {
-	role		= aws_iam_role.faas_service_role.name
-	policy_arn	= "arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforAWSCodeDeploy"
-	depends_on	= [aws_iam_role.faas_service_role]
+data "aws_iam_policy_document" "ec2" {
+	statement {
+		actions   = [
+			# "*"
+			"s3:Get*",
+			"s3:List*"
+		]
+		resources = ["*"]
+		effect    = "Allow"
+	}
+}
+
+resource "aws_iam_policy" "ec2" {
+	policy = data.aws_iam_policy_document.ec2.json
+}
+
+resource "aws_iam_role_policy_attachment" "ec2" {
+	role		= aws_iam_role.ec2.name
+	policy_arn	= aws_iam_policy.ec2.arn
 }
 
 resource "aws_iam_instance_profile" "ec2_profile" {
 	name		= "faas_service_profile"
-	role		= aws_iam_role.faas_service_role.name
-	depends_on	= [aws_iam_role.faas_service_role]
+	role		= aws_iam_role.ec2.name
 }
 
 resource "aws_key_pair" "ec2_key_pair" {

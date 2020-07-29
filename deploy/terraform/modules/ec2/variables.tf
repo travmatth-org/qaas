@@ -9,3 +9,5 @@ variable "public_subnet" {
 variable "internet_gateway" {
 	description = "Internet Gateway for public assets"
 }
+
+variable "codepipeline_artifact_bucket" {}

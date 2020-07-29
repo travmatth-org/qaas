@@ -9,7 +9,6 @@ module "codebuild" {
 
 module "codedeploy" {
   source                        = "./modules/codedeploy"
-  codepipeline_artifact_bucket  = var.codepipeline_artifact_bucket
 }
 
 module "codepipeline" {

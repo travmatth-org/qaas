@@ -23,20 +23,22 @@ data "aws_iam_policy_document" "codepipeline_policy" {
     effect    = "Allow"
     actions   = ["s3:*"]
     resources = [
-      var.codebuild_logging_bucket.arn,
-      "${var.codebuild_logging_bucket.arn}/*",
-      var.codepipeline_artifact_bucket.arn,
-      "${var.codepipeline_artifact_bucket.arn}/*",
-      "arn:aws:s3:::codepipeline-us-west-1*",
-      "arn:aws:s3:::codepipeline-us-west-1*/*",
+      "*"
+      # var.codebuild_logging_bucket.arn,
+      # "${var.codebuild_logging_bucket.arn}/*",
+      # var.codepipeline_artifact_bucket.arn,
+      # "${var.codepipeline_artifact_bucket.arn}/*",
+      # "arn:aws:s3:::codepipeline-us-west-1*",
+      # "arn:aws:s3:::codepipeline-us-west-1*/*",
     ]
   }
 
   statement {
     effect    = "Allow"
     actions   = [
-      "codebuild:BatchGetBuilds",
-      "codebuild:StartBuild",
+      "*"
+      # "codebuild:BatchGetBuilds",
+      # "codebuild:StartBuild",
     ]
     resources = ["*"]
   }
