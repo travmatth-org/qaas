@@ -1,3 +1,7 @@
+variable "aws_account_id" {
+	description = "Account ID of AWS account"
+}
+
 resource "aws_s3_bucket" "tf_state_bucket" {
   bucket = "faas-terraform-state-bucket-${var.aws_account_id}"
 
@@ -23,6 +27,10 @@ resource "aws_s3_bucket" "tf_state_bucket" {
   }
 }
 
+output "tf_state_bucket" {
+	value = aws_s3_bucket.tf_state_bucket
+}
+
 resource "aws_s3_bucket" "codebuild_logging_bucket" {
   bucket = "faas-codebuild-logging-bucket-${var.aws_account_id}"
 
@@ -42,6 +50,10 @@ resource "aws_s3_bucket" "codebuild_logging_bucket" {
     Terraform = "true"
     Logging = "true"
   }
+}
+
+output "codebuild_logging_bucket" {
+	value = aws_s3_bucket.codebuild_logging_bucket
 }
 
 resource "aws_s3_bucket" "codepipeline_artifact_bucket" {
@@ -65,6 +77,10 @@ resource "aws_s3_bucket" "codepipeline_artifact_bucket" {
   }
 }
 
+output "codepipeline_artifact_bucket" {
+	value = aws_s3_bucket.codepipeline_artifact_bucket
+}
+
 resource "aws_dynamodb_table" "terraform_lock_state_dynamodb" {
   name = "faas-dynamodb-terraform-locking"
   billing_mode = "PAY_PER_REQUEST"
@@ -80,4 +96,8 @@ resource "aws_dynamodb_table" "terraform_lock_state_dynamodb" {
     Terraform = "true"
     FaaS      = "true"
   }
+}
+
+output "dynamodb_lock_state_table" {
+	value = aws_dynamodb_table.terraform_lock_state_dynamodb
 }

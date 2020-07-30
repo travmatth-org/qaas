@@ -1,64 +1,17 @@
-data "aws_iam_policy_document" "codepipeline_role_policy" {
-  statement {
-    effect = "Allow"
-    principals {
-      type        = "Service"
-      identifiers = ["codepipeline.amazonaws.com"]
-    }
-    actions = ["sts:AssumeRole"]
-  }
-}
-
-resource "aws_iam_role" "codepipeline_role" {
-  name               = "TerraformCodePipelineIamRole"
-  assume_role_policy = data.aws_iam_policy_document.codepipeline_role_policy.json
-
-  tags               = {
-    FaaS = "true"
-  }
-}
-
-data "aws_iam_policy_document" "codepipeline_policy" {
-  statement {
-    effect    = "Allow"
-    actions   = ["s3:*"]
-    resources = [
-      "*"
-      # var.codebuild_logging_bucket.arn,
-      # "${var.codebuild_logging_bucket.arn}/*",
-      # var.codepipeline_artifact_bucket.arn,
-      # "${var.codepipeline_artifact_bucket.arn}/*",
-      # "arn:aws:s3:::codepipeline-us-west-1*",
-      # "arn:aws:s3:::codepipeline-us-west-1*/*",
-    ]
-  }
-
-  statement {
-    effect    = "Allow"
-    actions   = [
-      "*"
-      # "codebuild:BatchGetBuilds",
-      # "codebuild:StartBuild",
-    ]
-    resources = ["*"]
-  }
-
-  statement {
-    effect    = "Allow"
-    actions   = ["codedeploy:*"]
-    resources = ["*"]
-  }
-}
-
-resource "aws_iam_role_policy" "codepipeline_policy" {
-  name    = "FaasCodePipelinePolicy"
-  role    = aws_iam_role.codepipeline_role.id
-  policy  = data.aws_iam_policy_document.codepipeline_policy.json
-}
+variable "faas_iam_role" {}
+variable "github_repo" {}
+variable "codepipeline_artifact_bucket" {}
+variable "codedeploy_app_name" {}
+variable "codedeploy_group_name" {}
+variable "codebuild_logging_bucket" {}
+variable "dynamodb_lock_state_table" {}
+variable "codebuild_project" {}
+variable "webhook_secret" {}
+variable "github_oauth_token" {}
 
 resource "aws_codepipeline" "codepipeline" {
   name     = "FaaSCodePipeline"
-  role_arn = aws_iam_role.codepipeline_role.arn
+  role_arn = var.faas_iam_role.arn
 
   artifact_store {
     location = var.codepipeline_artifact_bucket.bucket
@@ -132,6 +85,10 @@ resource "aws_codepipeline" "codepipeline" {
       }
     }
   }
+}
+
+output "codepipeline" {
+	value = aws_codepipeline.codepipeline
 }
 
 resource "aws_codepipeline_webhook" "faas" {

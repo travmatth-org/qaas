@@ -7,12 +7,20 @@ resource "aws_vpc" "local" {
 	}
 }
 
+output "public_vpc" {
+	value = aws_vpc.local
+}
+
 resource "aws_internet_gateway" "faas" {
 	vpc_id = aws_vpc.local.id
 
 	tags = {
 		FaaS = "gateway"
 	}
+}
+
+output "internet_gateway" {
+	value = aws_internet_gateway.faas
 }
 
 resource "aws_subnet" "public_subnet" {
@@ -25,6 +33,10 @@ resource "aws_subnet" "public_subnet" {
 	tags = {
 		FaaS = "public-subnet"
 	}
+}
+
+output "public_subnet" {
+	value = aws_subnet.public_subnet
 }
 
 # resource "aws_network_acl" "public_subnet_acl" {

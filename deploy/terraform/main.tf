@@ -65,8 +65,13 @@ module "tf_backend" {
   aws_account_id  = data.aws_caller_identity.current.account_id
 }
 
+module "iam" {
+  source = "./modules/iam"
+}
+
 module "cicd" {
   source                       = "./modules/cicd"
+  faas_iam_role                = module.iam.faas_iam_role
   github_oauth_token           = var.github_oauth_token
   webhook_secret               = random_password.github_secret.result
   codebuild_logging_bucket     = module.tf_backend.codebuild_logging_bucket
@@ -86,4 +91,5 @@ module "ec2" {
   public_subnet    = module.network.public_subnet
   internet_gateway = module.network.internet_gateway
   codepipeline_artifact_bucket = module.tf_backend.codepipeline_artifact_bucket
+  faas_instance_profile = module.iam.faas_instance_profile
 }
