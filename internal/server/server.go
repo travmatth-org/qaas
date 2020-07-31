@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/Travmatth/faas/internal/config"
@@ -132,5 +133,7 @@ func (s *Server) startServing() {
 	}
 	addr, dir := s.GetAddress(), s.Static
 	logger.Info().Str("addr", addr).Str("static", dir).Msg("Started")
+	// drop permissions before serving
+	_ = syscall.Umask(0022)
 	s.errorChannel <- s.Serve(*s.httpListener)
 }
