@@ -12,6 +12,7 @@ import (
 	"github.com/Travmatth/faas/internal/config"
 	"github.com/Travmatth/faas/internal/logger"
 	"github.com/Travmatth/faas/internal/middleware"
+	"github.com/coreos/go-systemd/v22/activation"
 	"github.com/gorilla/mux"
 	"github.com/justinas/alice"
 	"github.com/rs/zerolog/hlog"
@@ -79,6 +80,17 @@ func (s *Server) RegisterHandlers() {
 	logger.Info().Msg("Registered home and 404 html pages to endpoints")
 }
 
+func (s *Server) getListener() (*net.Listener, error) {
+	if _, found := os.LookupEnv("LISTEN_PID"); !found {
+		ln, err := net.Listen("tcp", s.Port)
+		return &ln, err
+	} else if listeners, err := activation.Listeners(); err != nil {
+		return nil, err
+	} else {
+		return &listeners[0], nil
+	}
+}
+
 // AcceptConnections listens on the configured address and ports for http
 // traffic. Simultaneously listens for incoming os signals, will return on
 // either a server error or a shutdown signal
@@ -87,12 +99,12 @@ func (s *Server) AcceptConnections() int {
 	signal.Notify(s.signalChannel, os.Interrupt)
 
 	// start listener and notify on success
-	ln, err := net.Listen("tcp", s.Port)
+	ln, err := s.getListener()
 	if err != nil {
 		logger.Error().Err(err).Msg("Error starting server")
 		return fail
 	}
-	s.httpListener = &ln
+	s.httpListener = ln
 	close(s.startedChannel)
 
 	// process incoming requests, close on err or force shutdown on signal
