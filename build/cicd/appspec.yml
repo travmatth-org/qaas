@@ -16,7 +16,7 @@ permissions:
     owner: faas
     group: faas
   - object: httpd
-    mode: 744
+    mode: 755
     owner: faas
     group: faas
 

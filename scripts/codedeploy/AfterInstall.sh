@@ -1,17 +1,11 @@
 #!/bin/bash
 set -eux pipefail
-# if [[ $HOST =~ *compute\.internal$ ]]; then
-# 	exec 5>> >(logger -t $0)
-# fi
 
-# install server assets
 sudo unzip -o /srv/assets.zip -d /srv
-
-# give service appropriate permissions
-sudo chmod 755 /usr/sbin/httpd
-
+sudo rm /srv/assets.zip
+# shellcheck disable=SC2046
+sudo chmod 0444 $(find /srv -type f)
 # allow service to run on privileged port
 sudo setcap 'cap_net_bind_service=+ep' /usr/sbin/httpd
-
 # enable faas service
 sudo systemctl enable httpd
