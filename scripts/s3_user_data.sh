@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2154
 set -eux pipefail
 # send script output to /tmp/user_data.log for debugging
 exec >> /tmp/user_data.log 2>&1
@@ -85,7 +86,7 @@ cat <<EOF > $cw_config
             ]
          }
       },
-      "log_stream_name": "{instance_id}/log-stream"
+      "log_stream_name": "${instance_id}/log-stream"
    }
 }
 EOF
