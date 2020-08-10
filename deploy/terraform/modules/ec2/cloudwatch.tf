@@ -7,7 +7,7 @@ resource "aws_cloudwatch_log_group" "faas" {
 }
 
 resource "aws_cloudwatch_dashboard" "faas-dashboard" {
-	dashboard_name = "dashboard-${aws_instance.faas_service}"
+	dashboard_name = "dashboard-${aws_instance.faas_service.id}"
 
 	# https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/CloudWatch-Dashboard-Body-Structure.html#CloudWatch-Dashboard-Properties-Metrics-Array-Format
 	dashboard_body = <<-EOF
@@ -20,12 +20,12 @@ resource "aws_cloudwatch_dashboard" "faas-dashboard" {
 						"AWS/EC2",
 						"CPUUtilization",
 						"InstanceId",
-						"${aws_instance.faas_service.name}"
+						"${aws_instance.faas_service.id}"
 					]],
 					"period": 300,
 					"stat": "Average",
 					"region": "us-west-1",
-					"title": "${aws_instance.faas_service.name - CPU Utilization}
+					"title": "CPU Utilization"
 				}
 			},
 			{
@@ -36,14 +36,14 @@ resource "aws_cloudwatch_dashboard" "faas-dashboard" {
 							"AWS/EC2",
 							"NetworkIn",
 							"InstanceId",
-							"${aws_instance.faas_service.name}"
+							"${aws_instance.faas_service.id}"
 						],
 						[
 							"AWS/EC2",
 							"NetworkOut",
 							"InstanceId",
-							"${aws_instance.faas_service.name}"
-						],
+							"${aws_instance.faas_service.id}"
+						]
 					],
 					"period": 300,
 					"stat": "Average",
