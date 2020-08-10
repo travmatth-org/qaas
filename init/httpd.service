@@ -20,8 +20,8 @@ PermissionsStartOnly=true
 ExecStartPre=/bin/mkdir -p /var/log/faas
 ExecStartPre=/bin/chown faas /var/log/faas
 ExecStartPre=/bin/chmod 755 /var/log/faas
-StandardOutput=syslog
-StandardError=syslog
+StandardOutput=file:/var/log/httpd/logs.log
+StandardError=file:/var/log/httpd/logs.log
 SyslogIdentifier=faas
 
 [Install]

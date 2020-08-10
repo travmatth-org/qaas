@@ -41,6 +41,23 @@ data "aws_iam_policy_document" "faas_cicd_policy" {
 		]
 		resources = ["*"]
 	}
+	
+	# allow cloudwatch-agent to collect and send logs, metrics
+	# https://github.com/SummitRoute/aws_managed_policies/blob/master/policies/CloudWatchAgentServerPolicy
+	statement {
+		effect  = "Allow"
+		actions = [
+			"cloudwatch:PutMetricData",
+			"ec2:DescribeVolumes",
+			"ec2:DescribeTags",
+			"logs:PutLogEvents",
+			"logs:DescribeLogStreams",
+			"logs:DescribeLogGroups",
+			"logs:CreateLogStream",
+			"logs:CreateLogGroup"
+		]
+		resources = ["*"]
+	}
 }
 
 resource "aws_iam_policy" "cicd" {
