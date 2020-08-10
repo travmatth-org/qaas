@@ -22,7 +22,7 @@ show:
 	terraform show;
 
 show.eip:
-	terraform state show 'module.ec2.aws_eip.faas_eip';
+	@terraform show -json | jq -r '.values[]?.child_modules[]?.resources[]? | select(.type == "aws_instance") | .values.public_ip';
 
 # makefile phony target
 .PHONY: init plan apply destroy destroy.ec2 show show.eip

@@ -92,8 +92,8 @@ tf.destroy.cicd:
 tf.show:
 	@$(MAKE) show -C deploy/terraform
 
-tf.show.eip:
-	@$(MAKE) show.eip -C deploy/terraform
+ssh:
+	ssh -i protected/faas_ec2.key ec2-user@`$(MAKE) show.eip -C deploy/terraform`
 
 # makefile phony target 
 .PHONY: default build build.all run get clean \
