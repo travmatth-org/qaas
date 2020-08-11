@@ -34,7 +34,7 @@ sudo rpm -U ./amazon-cloudwatch-agent.rpm
 cat <<EOF > $cw_config
 {
    "agent": {
-      "metrics_collection_interval": 60
+      "metrics_collection_interval": 15
    },
    "metrics": {
       "namespace": "Prod/Faas",
