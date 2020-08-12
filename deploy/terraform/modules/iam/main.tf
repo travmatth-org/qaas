@@ -33,7 +33,7 @@ data "aws_iam_policy_document" "faas_cicd_policy" {
 			"s3:*",
 			"logs:*",
 			"elasticloadbalancing:*",
-			"iam:*",
+			"iam:*", #?
 			"codedeploy:*",
 			"codepipeline:*",
 			"codebuild:*",
