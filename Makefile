@@ -92,6 +92,8 @@ tf.destroy.cicd:
 tf.show:
 	@$(MAKE) show -C deploy/terraform
 
+# ssh into ec2 instance using key
+
 ssh:
 	ssh -i protected/faas_ec2.key ec2-user@`$(MAKE) show.eip -C deploy/terraform`
 

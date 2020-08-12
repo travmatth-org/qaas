@@ -59,26 +59,29 @@ func New(c *config.Config) *Server {
 	return &Server{c, router, server, c.GetStopTimeout(), m, sig, err, started, nil}
 }
 
-func (s *Server) wrapRoute(h http.HandlerFunc) http.HandlerFunc {
-	segmentNamer := xray.NewFixedSegmentNamer("faas-httpd")
-	handlerChain := alice.New(
-		s.RecoverHandler,
-		hlog.NewHandler(*logger.GetLogger()),
-		hlog.RequestIDHandler("req_id", "Request-Id"),
-		hlog.RemoteAddrHandler("ip"),
-		hlog.RequestHandler("dest"),
-		hlog.RefererHandler("referer"),
-		middleware.Log,
-	).ThenFunc(h)
-	return xray.Handler(segmentNamer, handlerChain).ServeHTTP
+// WrapRoute composes endpoints by wrapping destination handler with handler
+// pipeline providing tracing with aws x-ray, injecting logging middleware   
+// with request details into the context, and error recovery middleware
+func (s *Server) WrapRoute(h http.HandlerFunc) http.HandlerFunc {
+	return xray.Handler(
+		xray.NewFixedSegmentNamer("faas-httpd"),
+		alice.New(
+			s.RecoverHandler,
+			hlog.NewHandler(*logger.GetLogger()),
+			hlog.RequestIDHandler("req_id", "Request-Id"),
+			hlog.RemoteAddrHandler("ip"),
+			hlog.RequestHandler("dest"),
+			hlog.RefererHandler("referer"),
+			middleware.Log,
+		).ThenFunc(h)).ServeHTTP
 }
 
 // RegisterHandlers attemtps to prepare and register the specified
 // routes with the given middlewware on the server instance.
 func (s *Server) RegisterHandlers() {
 	index, notfound := s.GetIndexHTML(), s.Get404()
-	s.HandleFunc("/", s.wrapRoute(s.ServeStatic(index)))
-	s.NotFoundHandler = s.wrapRoute(s.ServeStatic(notfound))
+	s.HandleFunc("/", s.WrapRoute(s.ServeStatic(index)))
+	s.NotFoundHandler = s.WrapRoute(s.ServeStatic(notfound))
 	logger.Info().Msg("Registered home and 404 html pages to endpoints")
 }
 
