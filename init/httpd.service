@@ -15,6 +15,7 @@ RestartSec=10
 WorkingDirectory = /srv/
 ExecStart = /usr/sbin/httpd
 KillSignal = SIGQUIT
+Environment=ENVIRONMENT=production
 
 PermissionsStartOnly=true
 ExecStartPre=/bin/mkdir -p /var/log/faas

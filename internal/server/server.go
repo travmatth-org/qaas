@@ -12,6 +12,7 @@ import (
 	"github.com/Travmatth/faas/internal/config"
 	"github.com/Travmatth/faas/internal/logger"
 	"github.com/Travmatth/faas/internal/middleware"
+	"github.com/aws/aws-xray-sdk-go/xray"
 	"github.com/gorilla/mux"
 	"github.com/justinas/alice"
 	"github.com/rs/zerolog/hlog"
@@ -59,7 +60,8 @@ func New(c *config.Config) *Server {
 }
 
 func (s *Server) wrapRoute(h http.HandlerFunc) http.HandlerFunc {
-	return alice.New(
+	segmentNamer := xray.NewFixedSegmentNamer("faas-httpd")
+	handlerChain := alice.New(
 		s.RecoverHandler,
 		hlog.NewHandler(*logger.GetLogger()),
 		hlog.RequestIDHandler("req_id", "Request-Id"),
@@ -67,7 +69,8 @@ func (s *Server) wrapRoute(h http.HandlerFunc) http.HandlerFunc {
 		hlog.RequestHandler("dest"),
 		hlog.RefererHandler("referer"),
 		middleware.Log,
-	).ThenFunc(h).ServeHTTP
+	).ThenFunc(h)
+	return xray.Handler(segmentNamer, handlerChain).ServeHTTP
 }
 
 // RegisterHandlers attemtps to prepare and register the specified

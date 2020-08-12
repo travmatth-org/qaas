@@ -98,7 +98,16 @@ sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
    -c file:$cw_config \
    -s
 
-# veryify the cloudwatch agent is running
+# verify the cloudwatch agent is running
 sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
    -m ec2 \
    -a status
+
+# install x-ray daemon
+mkdir -p /tmp/xray
+cd /tmp/xray
+curl https://s3.us-west-1.amazonaws.com/aws-xray-assets.us-west-1/xray-daemon/aws-xray-daemon-3.x.rpm -o /tmp/x-ray/xray.rpm
+sudo rpm -U ./tmp/x-ray/xray.rpm
+
+# verify the xray agent is running
+systemctl is-active --quiet xray
