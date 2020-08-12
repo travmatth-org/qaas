@@ -33,7 +33,7 @@ data "aws_iam_policy_document" "faas_cicd_policy" {
 			"s3:*",
 			"logs:*",
 			"elasticloadbalancing:*",
-			"iam:*",
+			"iam:*", #?
 			"codedeploy:*",
 			"codepipeline:*",
 			"codebuild:*",
@@ -55,6 +55,20 @@ data "aws_iam_policy_document" "faas_cicd_policy" {
 			"logs:DescribeLogGroups",
 			"logs:CreateLogStream",
 			"logs:CreateLogGroup"
+		]
+		resources = ["*"]
+	}
+
+	# allow x-ray to send traces
+	# https://docs.aws.amazon.com/xray/latest/devguide/security_iam_id-based-policy-examples.html
+	statement {
+		effect  = "Allow"
+		actions = [
+			"xray:PutTraceSegments",
+			"xray:PutTelemetryRecords",
+			"xray:GetSamplingRules",
+			"xray:GetSamplingTargets",
+			"xray:GetSamplingStatisticSummaries"
 		]
 		resources = ["*"]
 	}
