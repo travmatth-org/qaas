@@ -14,6 +14,7 @@ import (
 	"github.com/Travmatth/faas/internal/logger"
 	"github.com/Travmatth/faas/internal/middleware"
 	"github.com/aws/aws-xray-sdk-go/xray"
+	activation "github.com/coreos/go-systemd/activation"
 	"github.com/gorilla/mux"
 	"github.com/justinas/alice"
 	"github.com/rs/zerolog/hlog"
@@ -85,8 +86,10 @@ func (s *Server) OpenListener() (ln net.Listener, err error) {
 	// `LISTEN_PID` & `LISTEN_FDS`. To check if socket based activation is
 	// check to see if they are set
 	if os.Getenv("LISTEN_PID") == strconv.Itoa(os.Getpid()) {
-		f := os.NewFile(3, "from systemd")
-		ln, err = net.FileListener(f)
+		listeners, err := activation.Listeners()
+		if err != nil {
+			ln = listeners[0]
+		}
 	} else {
 		// else start listener and notify on success
 		ln, err = net.Listen("tcp", s.Port)
