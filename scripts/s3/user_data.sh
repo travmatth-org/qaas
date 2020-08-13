@@ -22,7 +22,6 @@ sudo mkdir -p web/www/static
 sudo mkdir /var/log/httpd
 
 # install cloudwatch-agent
-cw_config=""
 mkdir -p /tmp/cloudwatch-logs
 cd /tmp/cloudwatch-logs
 wget https://s3.us-west-1.amazonaws.com/amazoncloudwatch-agent-us-west-1/amazon_linux/amd64/latest/amazon-cloudwatch-agent.rpm
@@ -30,7 +29,7 @@ sudo rpm -U ./amazon-cloudwatch-agent.rpm
 
 # add config file for cw agent, specifying metrics & logs to collect
 # https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Agent-Configuration-File-Details.html
-sudo cat <<EOF > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+sudo bash -c "cat >/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json" <<'EOF'
 {
    "agent": {
       "metrics_collection_interval": 15

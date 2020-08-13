@@ -94,9 +94,6 @@ tf.show:
 
 # ssh into ec2 instance using key
 
-ssh:
-	./scripts/s3/ssh.sh
-
 # makefile phony target 
 .PHONY: default build build.all run get clean \
 	lint vet test.clean test check validate.sysd cicd \
