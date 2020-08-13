@@ -120,22 +120,23 @@ sudo yum install -y vector-x86_64.rpm
 
 # configure vector daemon  
 cat << VECTORCFG | sudo tee /etc/vector/vector.toml
-[sources.journald]
+[sources.in]
   type = "journald"
   include_units = ["httpd"]
 
-[sinks.cloudwatch]
+[sinks.out]
   encoding.codec = "json"
 
   # General
   group_name = "faas-httpd-logs"
   inputs = ["in"]
   region = "us-west-1"
-  stream_name = "ec2-{{ instance-id }}-logs"
+  stream_name = "{{ host }}"
   type = "aws_cloudwatch_logs"
 VECTORCFG
 
 # start vector daemon
+sudo usermod -aG systemd-journal vector
 sudo systemctl enable vector
 sudo systemctl start vector
 
