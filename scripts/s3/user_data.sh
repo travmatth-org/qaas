@@ -112,3 +112,32 @@ sudo systemctl start xray
 
 # verify the xray agent is running
 sudo systemctl is-active --quiet xray
+
+# install vector to forward journald traffic to the cloudwatch agent
+mkdir -p /tmp/vector
+curl -O https://packages.timber.io/vector/0.10.X/vector-x86_64.rpm
+sudo yum install -y vector-x86_64.rpm
+
+# configure vector daemon  
+cat << VECTORCFG | sudo tee /etc/vector/vector.toml
+[sources.journald]
+  type = "journald"
+  include_units = ["httpd"]
+
+[sinks.cloudwatch]
+  encoding.codec = "json"
+
+  # General
+  group_name = "faas-httpd-logs"
+  inputs = ["in"]
+  region = "us-west-1"
+  stream_name = "ec2-{{ instance-id }}-logs"
+  type = "aws_cloudwatch_logs"
+VECTORCFG
+
+# start vector daemon
+sudo systemctl enable vector
+sudo systemctl start vector
+
+# verify the vector daemon is running
+sudo systemctl is-active --quiet vector

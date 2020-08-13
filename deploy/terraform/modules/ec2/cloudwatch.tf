@@ -6,6 +6,11 @@ resource "aws_cloudwatch_log_group" "faas" {
 	}
 }
 
+resource "aws_cloudwatch_log_stream" "foo" {
+  name           = "ec2-${aws_instance.faas_service.id}-logs"
+  log_group_name = aws_cloudwatch_log_group.faas.name
+}
+
 resource "aws_cloudwatch_dashboard" "faas-dashboard" {
 	dashboard_name = "dashboard-faas-service-ec2-${aws_instance.faas_service.id}"
 
