@@ -2,6 +2,7 @@
 Description = Fortunes As A Service HTTP Server
 ConditionPathExists=/usr/sbin/httpd
 After=network.target
+Requires=httpd.socket
 
 [Service]
 Type=simple
@@ -21,9 +22,15 @@ PermissionsStartOnly=true
 ExecStartPre=/bin/mkdir -p /var/log/faas
 ExecStartPre=/bin/chown faas /var/log/faas
 ExecStartPre=/bin/chmod 755 /var/log/faas
-StandardOutput=/var/log/httpd/logs.log
-StandardError=/var/log/httpd/logs.log
+
+# Logging details
+StandardOutput=journal
+StandardError=journal
 SyslogIdentifier=faas
+
+# golang sets O_NONBLOCK on sockets it opens
+# we want to imitate that behavior
+NonBlocking=true
 
 [Install]
 WantedBy=multi-user.target

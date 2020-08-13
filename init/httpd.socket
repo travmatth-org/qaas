@@ -1,0 +1,8 @@
+[Unit]
+Description=Faas HTTP Socket
+
+[Socket]
+ListenStream=80
+# go sets TCP_NODELAY & O_NONBLOCK by default on
+# sockets it opens, we want similar behavior
+NoDelay=true

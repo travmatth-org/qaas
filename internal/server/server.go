@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -18,13 +19,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/justinas/alice"
 	"github.com/rs/zerolog/hlog"
-)
-
-const (
-	// OK returned by server.AcceptConnections when signal directs shutdown
-	ok = iota
-	// Error returned by server.AcceptConnections when error forces shutdown
-	fail
 )
 
 // Server represents the running server with embedded
@@ -62,7 +56,7 @@ func New(c *config.Config) *Server {
 }
 
 // WrapRoute composes endpoints by wrapping destination handler with handler
-// pipeline providing tracing with aws x-ray, injecting logging middleware   
+// pipeline providing tracing with aws x-ray, injecting logging middleware
 // with request details into the context, and error recovery middleware
 func (s *Server) WrapRoute(h http.HandlerFunc) http.HandlerFunc {
 	return xray.Handler(
@@ -87,29 +81,34 @@ func (s *Server) RegisterHandlers() {
 	logger.Info().Msg("Registered home and 404 html pages to endpoints")
 }
 
-func (s *Server) getListener() (*net.Listener, error) {
-	if _, found := os.LookupEnv("LISTEN_PID"); !found {
-		ln, err := net.Listen("tcp", s.Port)
-		return &ln, err
-	} else if listeners, err := activation.Listeners(); err != nil {
-		return nil, err
+// OpenListener returns a listener for the server to receive traffic on, or err
+func (s *Server) OpenListener() (ln net.Listener, err error) {
+	// when systemd starts a process using socket-based activation it sets
+	// `LISTEN_PID` & `LISTEN_FDS`. To check if socket based activation is
+	// check to see if they are set
+	if os.Getenv("LISTEN_PID") == strconv.Itoa(os.Getpid()) {
+		listeners, err := activation.Listeners()
+		if err != nil {
+			ln = listeners[0]
+		}
 	} else {
-		return &listeners[0], nil
+		// else start listener and notify on success
+		ln, err = net.Listen("tcp", s.Port)
 	}
+	return
 }
 
 // AcceptConnections listens on the configured address and ports for http
 // traffic. Simultaneously listens for incoming os signals, will return on
 // either a server error or a shutdown signal
-func (s *Server) AcceptConnections() int {
+func (s *Server) AcceptConnections() error {
 	// register and intercept shutdown signals
 	signal.Notify(s.signalChannel, os.Interrupt)
 
-	// start listener and notify on success
-	ln, err := s.getListener()
+	ln, err := s.OpenListener()
 	if err != nil {
-		logger.Error().Err(err).Msg("Error starting server")
-		return fail
+		logger.Error().Err(err).Msg("Error initializing listener for http server")
+		return err
 	}
 	s.httpListener = ln
 	close(s.startedChannel)
@@ -119,15 +118,16 @@ func (s *Server) AcceptConnections() int {
 	select {
 	case err := <-s.errorChannel:
 		logger.Error().Err(err).Msg("Error occurred, shutting down")
-		return fail
+		return err
 	case sig := <-s.signalChannel:
 		ctx, cancel := context.WithTimeout(context.Background(), s.stopTimeout)
 		defer cancel()
+		shutdownErr := s.Shutdown(ctx)
 		logger.Error().
-			Err(s.Shutdown(ctx)).
+			Err(shutdownErr).
 			Str("signal", sig.String()).
 			Msg("Received signal, shutting down")
-		return ok
+		return shutdownErr
 	}
 }
 

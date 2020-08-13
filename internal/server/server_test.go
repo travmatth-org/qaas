@@ -106,10 +106,10 @@ func TestServer_HomeAnd404Routes(t *testing.T) {
 	}
 }
 
-func startServerTest(t *testing.T) (*Server, chan int) {
+func startServerTest(t *testing.T) (*Server, chan error) {
 	// configure a server endpoint, mocking out logs for a buffer
 	_, s := configureServer(t)
-	ch := make(chan int, 1)
+	ch := make(chan error, 1)
 	go func() {
 		ch <- s.AcceptConnections()
 	}()

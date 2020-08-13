@@ -6,6 +6,8 @@ files:
     destination: /usr/sbin
   - source: ./httpd.service
     destination: /usr/lib/systemd/system
+  - source: ./httpd.socket
+    destination: /usr/lib/systemd/system
   - source: ./assets.zip
     destination: /srv
 
