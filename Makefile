@@ -95,7 +95,7 @@ tf.show:
 # ssh into ec2 instance using key
 
 ssh:
-	ssh -i protected/faas_ec2.key ec2-user@`$(MAKE) show.eip -C deploy/terraform`
+	./scripts/s3/ssh.sh
 
 # makefile phony target 
 .PHONY: default build build.all run get clean \

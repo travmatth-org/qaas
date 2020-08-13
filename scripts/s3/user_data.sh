@@ -1,5 +1,4 @@
 #!/bin/bash
-# shellcheck disable=SC2154
 set -eux pipefail
 # send script output to /tmp/user_data.log for debugging
 exec >> /tmp/user_data.log 2>&1
@@ -23,17 +22,15 @@ sudo mkdir -p web/www/static
 sudo mkdir /var/log/httpd
 
 # install cloudwatch-agent
-sudo yum install -y epel-release
-sudo yum --enablerepo=epel install collectd
-cw_config="/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json"
-mkdir -P /tmp/cloudwatch-logs
+cw_config=""
+mkdir -p /tmp/cloudwatch-logs
 cd /tmp/cloudwatch-logs
 wget https://s3.us-west-1.amazonaws.com/amazoncloudwatch-agent-us-west-1/amazon_linux/amd64/latest/amazon-cloudwatch-agent.rpm
 sudo rpm -U ./amazon-cloudwatch-agent.rpm
 
 # add config file for cw agent, specifying metrics & logs to collect
 # https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Agent-Configuration-File-Details.html
-cat <<EOF > $cw_config
+sudo cat <<EOF > /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
 {
    "agent": {
       "metrics_collection_interval": 15
@@ -45,26 +42,26 @@ cat <<EOF > $cw_config
             "measurement": [
                "usage_active",
                "usage_iowait"
-            ],
+            ]
          },
          "mem": {
             "measurement": [
                "used",
                "total"
-            ],
+            ]
          },
          "net": {
             "measurement": [
                "bytes_sent",
                "bytes_recv"
-            ],
-         },
+            ]
+         }
       },
       "append_dimensions": {
-         "ImageId": "${aws:ImageId}",
-         "InstanceId": "${aws:InstanceId}",
-         "InstanceType": "${aws:InstanceType}",
-         "AutoScalingGroupName": "${aws:AutoScalingGroupName}"
+         "ImageId": "\${aws:ImageId}",
+         "InstanceId": "\${aws:InstanceId}",
+         "InstanceType": "\${aws:InstanceType}",
+         "AutoScalingGroupName": "\${aws:AutoScalingGroupName}"
       },
       "aggregation_dimensions": [
          [
@@ -83,12 +80,12 @@ cat <<EOF > $cw_config
                {
                   "file_path": "/var/log/httpd.log*",
                   "log_group_name": "faas-httpd-logs",
-                  "log_stream_name": "ec2-${instance_id}-logs",
+                  "log_stream_name": "ec2-\${instance_id}-logs"
                }
             ]
          }
       },
-      "log_stream_name": "${instance_id}/log-stream"
+      "log_stream_name": "\${instance_id}/log-stream"
    }
 }
 EOF
@@ -97,7 +94,7 @@ EOF
 sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
    -a fetch-config \
    -m ec2 \
-   -c file:$cw_config \
+   -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json \
    -s
 
 # verify the cloudwatch agent is running

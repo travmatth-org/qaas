@@ -60,7 +60,7 @@ resource "aws_instance" "faas_service" {
 	iam_instance_profile	= var.faas_instance_profile.name
 	key_name				= aws_key_pair.ec2_key_pair.key_name
 	depends_on				= [var.internet_gateway]
-	user_data				= file("../../scripts/s3_user_data.sh")
+	user_data				= file("../../scripts/s3/user_data.sh")
 
 	tags = {
 		faas = "SERVICE"
