@@ -1,5 +1,4 @@
 #!/bin/bash
-# shellcheck disable=SC2154
 set -eux pipefail
 # send script output to /tmp/user_data.log for debugging
 exec >> /tmp/user_data.log 2>&1
