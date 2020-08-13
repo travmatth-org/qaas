@@ -30,6 +30,8 @@ mkdir -P /tmp/cloudwatch-logs
 cd /tmp/cloudwatch-logs
 wget https://s3.us-west-1.amazonaws.com/amazoncloudwatch-agent-us-west-1/amazon_linux/amd64/latest/amazon-cloudwatch-agent.rpm
 sudo rpm -U ./amazon-cloudwatch-agent.rpm
+
+# add config file for cw agent, specifying metrics & logs to collect
 # https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Agent-Configuration-File-Details.html
 cat <<EOF > $cw_config
 {
@@ -104,10 +106,12 @@ sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
    -a status
 
 # install x-ray daemon
-mkdir -p /tmp/xray
-cd /tmp/xray
-curl https://s3.us-west-1.amazonaws.com/aws-xray-assets.us-west-1/xray-daemon/aws-xray-daemon-3.x.rpm -o /tmp/x-ray/xray.rpm
-sudo rpm -U ./tmp/x-ray/xray.rpm
+curl https://s3.dualstack.us-east-2.amazonaws.com/aws-xray-assets.us-east-2/xray-daemon/aws-xray-daemon-3.x.rpm -o /home/ec2-user/xray.rpm
+sudo yum install -y /home/ec2-user/xray.rpm
+
+# start x-ray daemon
+sudo systemctl enable xray
+sudo systemctl start xray
 
 # verify the xray agent is running
-systemctl is-active --quiet xray
+sudo systemctl is-active --quiet xray
