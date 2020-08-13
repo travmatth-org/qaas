@@ -12,7 +12,6 @@ import (
 )
 
 func init() {
-	// conditionally load plugin
 	if os.Getenv("ENVIRONMENT") == "production" {
 		ec2.Init()
 	}
@@ -37,5 +36,7 @@ func main() {
 	s.RegisterHandlers()
 
 	// run server
-	os.Exit(s.AcceptConnections())
+	if err := s.AcceptConnections(); err != nil {
+		os.Exit(1)
+	}
 }

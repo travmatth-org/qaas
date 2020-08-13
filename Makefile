@@ -15,7 +15,7 @@ build: clean $(MAIN)
 
 build.all: build
 	zip -r dist/assets.zip web/
-	cp init/httpd.service dist
+	cp init/* dist
 	cp build/cicd/appspec.yml dist
 	cp scripts/codedeploy/* dist/
 
