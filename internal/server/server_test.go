@@ -138,7 +138,7 @@ func TestServer_SignalShutdown(t *testing.T) {
 	// block until shutdown received, or timeout exceeded
 	select {
 	case status := <-ch:
-		if status != ok {
+		if status != nil {
 			t.Fatal("Error: incorrect shutdown val: ", status)
 		}
 	case <-time.After(3 * time.Second):

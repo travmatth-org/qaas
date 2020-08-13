@@ -110,7 +110,7 @@ func (s *Server) AcceptConnections() error {
 		logger.Error().Err(err).Msg("Error initializing listener for http server")
 		return err
 	}
-	s.httpListener = ln
+	s.httpListener = &ln
 	close(s.startedChannel)
 
 	// process incoming requests, close on err or force shutdown on signal
