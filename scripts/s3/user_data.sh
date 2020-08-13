@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2154
 set -eux pipefail
 # send script output to /tmp/user_data.log for debugging
 exec >> /tmp/user_data.log 2>&1
@@ -29,7 +30,7 @@ sudo rpm -U ./amazon-cloudwatch-agent.rpm
 
 # add config file for cw agent, specifying metrics & logs to collect
 # https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Agent-Configuration-File-Details.html
-sudo bash -c "cat >/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json" <<'EOF'
+cat << 'EOF' | sudo tee /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
 {
    "agent": {
       "metrics_collection_interval": 15
@@ -57,10 +58,10 @@ sudo bash -c "cat >/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.
          }
       },
       "append_dimensions": {
-         "ImageId": "\${aws:ImageId}",
-         "InstanceId": "\${aws:InstanceId}",
-         "InstanceType": "\${aws:InstanceType}",
-         "AutoScalingGroupName": "\${aws:AutoScalingGroupName}"
+         "ImageId": "${aws:ImageId}",
+         "InstanceId": "${aws:InstanceId}",
+         "InstanceType": "${aws:InstanceType}",
+         "AutoScalingGroupName": "${aws:AutoScalingGroupName}"
       },
       "aggregation_dimensions": [
          [
@@ -79,12 +80,12 @@ sudo bash -c "cat >/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.
                {
                   "file_path": "/var/log/httpd.log*",
                   "log_group_name": "faas-httpd-logs",
-                  "log_stream_name": "ec2-\${instance_id}-logs"
+                  "log_stream_name": "ec2-${instance_id}-logs"
                }
             ]
          }
       },
-      "log_stream_name": "\${instance_id}/log-stream"
+      "log_stream_name": "${instance_id}/log-stream"
    }
 }
 EOF

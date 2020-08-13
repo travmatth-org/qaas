@@ -1,5 +1,5 @@
 resource "aws_cloudwatch_log_group" "faas" {
-	name = "faas_log_group"
+	name = "faas-httpd-logs"
 
 	tags = {
 		faas = "service"
