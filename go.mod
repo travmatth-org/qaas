@@ -4,6 +4,7 @@ go 1.12
 
 require (
 	github.com/aws/aws-xray-sdk-go v1.1.0
+	github.com/coreos/go-systemd/v22 v22.1.0
 	github.com/creack/pty v1.1.11 // indirect
 	github.com/gorilla/mux v1.7.4
 	github.com/justinas/alice v1.2.0
