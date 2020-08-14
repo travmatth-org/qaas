@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net"
 	"net/http"
 	"os"
@@ -87,11 +88,17 @@ func (s *Server) OpenListener() (ln net.Listener, err error) {
 	// `LISTEN_PID` & `LISTEN_FDS`. To check if socket based activation is
 	// check to see if they are set
 	if os.Getenv("LISTEN_PID") == strconv.Itoa(os.Getpid()) {
+		logger.Info().Msg("Activating systemd socket")
 		listeners, err := activation.Listeners()
-		if err != nil {
+		n := len(listeners)
+		if n != 1 {
+			err = fmt.Errorf("Systemd socket error: unexepected number of listeners: %d", n)
+		} else if err != nil {
+			logger.Info().Msg("Activated systemd socket")
 			ln = listeners[0]
 		}
 	} else {
+		logger.Info().Msg("Activating non-systemd socket")
 		// else start listener and notify on success
 		ln, err = net.Listen("tcp", s.Port)
 	}
