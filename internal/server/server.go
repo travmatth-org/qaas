@@ -35,7 +35,7 @@ type Server struct {
 	signalChannel  chan os.Signal
 	errorChannel   chan error
 	startedChannel chan struct{}
-	httpListener   *net.Listener
+	httpListener   net.Listener
 }
 
 // New configures and returns a server instance struct.
@@ -83,31 +83,22 @@ func (s *Server) RegisterHandlers() {
 }
 
 // OpenListener returns a listener for the server to receive traffic on, or err
-func (s *Server) OpenListener() (ln *net.Listener, err error) {
+func (s *Server) OpenListener() (net.Listener, error) {
 	// when systemd starts a process using socket-based activation it sets
 	// `LISTEN_PID` & `LISTEN_FDS`. To check if socket based activation is
 	// check to see if they are set
 	if os.Getenv("LISTEN_PID") == strconv.Itoa(os.Getpid()) {
 		logger.Info().Msg("Activating systemd socket")
 		listeners, err := activation.Listeners()
-		n := len(listeners)
-		if n != 1 {
-			err = fmt.Errorf("Systemd socket error: unexepected number of listeners: %d", n)
-			logger.Error().Int("number", n).Msg("Systemd socket error: unexepected number of listeners")
-		} else if err != nil {
-			logger.Info().Msg("Activated systemd socket")
-			ln = &listeners[0]
-		}
-	} else {
-		logger.Info().Msg("Activating non-systemd socket")
-		// else start listener and notify on success
-		listener, err := net.Listen("tcp", s.Port)
 		if err != nil {
-			return nil, err
+			return listeners[0], err
+		} else if n := len(listeners); n != 1 {
+			err = fmt.Errorf("Systemd socket error: unexepected number of listeners: %d", n)
 		}
-		ln = &listener
+		return listeners[0], err
 	}
-	return
+	logger.Info().Msg("Activating non-systemd socket")
+	return net.Listen("tcp", s.Port)
 }
 
 // AcceptConnections listens on the configured address and ports for http
