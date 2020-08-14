@@ -83,7 +83,7 @@ func (s *Server) RegisterHandlers() {
 }
 
 // OpenListener returns a listener for the server to receive traffic on, or err
-func (s *Server) OpenListener() (ln net.Listener, err error) {
+func (s *Server) OpenListener() (ln *net.Listener, err error) {
 	// when systemd starts a process using socket-based activation it sets
 	// `LISTEN_PID` & `LISTEN_FDS`. To check if socket based activation is
 	// check to see if they are set
@@ -93,14 +93,19 @@ func (s *Server) OpenListener() (ln net.Listener, err error) {
 		n := len(listeners)
 		if n != 1 {
 			err = fmt.Errorf("Systemd socket error: unexepected number of listeners: %d", n)
+			logger.Error().Int("number", n).Msg("Systemd socket error: unexepected number of listeners")
 		} else if err != nil {
 			logger.Info().Msg("Activated systemd socket")
-			ln = listeners[0]
+			ln = &listeners[0]
 		}
 	} else {
 		logger.Info().Msg("Activating non-systemd socket")
 		// else start listener and notify on success
-		ln, err = net.Listen("tcp", s.Port)
+		listener, err := net.Listen("tcp", s.Port)
+		if err != nil {
+			return nil, err
+		}
+		ln = &listener
 	}
 	return
 }
@@ -117,7 +122,7 @@ func (s *Server) AcceptConnections() error {
 		logger.Error().Err(err).Msg("Error initializing listener for http server")
 		return err
 	}
-	s.httpListener = &ln
+	s.httpListener = ln
 	close(s.startedChannel)
 
 	// process incoming requests, close on err or force shutdown on signal
