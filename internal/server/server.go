@@ -144,5 +144,5 @@ func (s *Server) startServing() {
 	logger.Info().Str("addr", addr).Str("static", dir).Msg("Started")
 	// drop permissions before serving
 	_ = syscall.Umask(0022)
-	s.errorChannel <- s.Serve(*s.httpListener)
+	s.errorChannel <- s.Serve(s.httpListener)
 }
