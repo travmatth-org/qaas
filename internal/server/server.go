@@ -16,6 +16,7 @@ import (
 	"github.com/Travmatth/faas/internal/logger"
 	"github.com/Travmatth/faas/internal/middleware"
 	"github.com/aws/aws-xray-sdk-go/xray"
+	"github.com/coreos/go-systemd/daemon"
 	"github.com/coreos/go-systemd/v22/activation"
 	"github.com/gorilla/mux"
 	"github.com/justinas/alice"
@@ -134,6 +135,29 @@ func (s *Server) AcceptConnections() error {
 	}
 }
 
+// LivenessCheck retrieves home page  to verify the liveness of the server,
+// then notifies the systemd daemon to pass the check.
+func (s *Server) LivenessCheck() {
+	interval, err := daemon.SdWatchdogEnabled(false)
+	if err != nil || interval == 0 {
+		logger.Info().
+			Err(err).
+			Dur("interval", interval).
+			Msg("Not starting readiness checks")
+		return
+	}
+	for {
+		_, err = http.Get("http://localhost:80")
+		if err == nil {
+			// If server fails health check, systemd will restart
+			_, _ = daemon.SdNotify(false, daemon.SdNotifyWatchdog)
+		} else {
+			logger.Error().Msg("Liveness check failed")
+		}
+		time.Sleep(interval)
+	}
+}
+
 // serve http on given listener, or return if no listener
 func (s *Server) startServing() {
 	if s.httpListener == nil {
@@ -144,5 +168,13 @@ func (s *Server) startServing() {
 	logger.Info().Str("addr", addr).Str("static", dir).Msg("Started")
 	// drop permissions before serving
 	_ = syscall.Umask(0022)
+	// notify systemd daemon server is ready
+	if s.IsProd() {
+		_, err := daemon.SdNotify(false, daemon.SdNotifyReady)
+		if err != nil {
+			logger.Error().Err(err).Msg("Error notifying systemd of readiness")
+		}
+		go s.LivenessCheck()
+	}
 	s.errorChannel <- s.Serve(s.httpListener)
 }

@@ -5,7 +5,7 @@ After=network.target
 Requires=httpd.socket
 
 [Service]
-Type=simple
+Type=notify
 User=faas
 Group=faas
 LimitNOFILE=1024
