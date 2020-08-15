@@ -5,7 +5,7 @@ exec >> /tmp/user_data.log 2>&1
 
 # install dependencies
 sudo yum -y update
-sudo yum -y install ruby wget shadow-utils.x86_64 #libcap2-bin
+sudo yum -y install ruby wget shadow-utils.x86_64
 
 # install codedeploy agent
 cd /home/ec2-user
