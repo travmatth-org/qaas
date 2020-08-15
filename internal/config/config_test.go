@@ -86,8 +86,8 @@ func TestConfig(t *testing.T) {
 			"string",
 		},
 		{
-			"TestIsDev",
-			method{mockTime, mockStr, c.IsDev},
+			"TestIsProd",
+			method{mockTime, mockStr, c.IsProd},
 			want{time.Duration(0), "", false},
 			"string",
 		},
@@ -106,9 +106,9 @@ func TestConfig(t *testing.T) {
 	}
 }
 
-func TestDev(t *testing.T) {
+func TestProd(t *testing.T) {
 	c := New()
-	if c.IsDev() != false {
-		t.Fatalf("Error: Incorrect default dev val")
+	if c.IsProd() != false {
+		t.Fatalf("Error: Incorrect default prod val")
 	}
 }

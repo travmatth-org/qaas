@@ -31,7 +31,7 @@ type Config struct {
 	WriteTimeout int
 	StopTimeout  int
 	IdleTimeout  int
-	Dev          bool
+	Prod         bool
 }
 
 // New construct and returns a config with default values,
@@ -46,7 +46,7 @@ func New() *Config {
 		WriteTimeout: defaultWriteTimeout,
 		StopTimeout:  defaultStopTimeout,
 		IdleTimeout:  defaultIdleTimeout,
-		Dev:          false,
+		Prod:         false,
 	}
 }
 
@@ -70,14 +70,14 @@ func Build() *Config {
 	idleTimeout := flag.Int("idle-timeout", defaultIdleTimeout, message)
 	message = "Default timeout for server to wait for existing connections to close"
 	stopTimeout := flag.Int("stop-timeout", defaultStopTimeout, message)
-	message = "Set execution for development environment"
-	dev := flag.Bool("dev", false, message)
+	message = "Set execution for production environment"
+	prod := flag.Bool("prod", false, message)
 
 	flag.Parse()
 
 	return &Config{
 		cwd, *ip, *port, *readTimeout, *writeTimeout,
-		*stopTimeout, *idleTimeout, *dev,
+		*stopTimeout, *idleTimeout, *prod,
 	}
 }
 
@@ -116,7 +116,7 @@ func (c Config) Get404() string {
 	return filepath.Join(c.Static, notFound)
 }
 
-// IsDev returns bool representing whether program executing in dev mode
-func (c Config) IsDev() bool {
-	return c.Dev
+// IsProd returns bool representing whether program executing in dev mode
+func (c Config) IsProd() bool {
+	return c.Prod
 }

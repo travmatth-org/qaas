@@ -12,15 +12,6 @@ import (
 )
 
 func init() {
-	if os.Getenv("ENVIRONMENT") == "production" {
-		ec2.Init()
-	}
-
-	err := xray.Configure(xray.Config{ServiceVersion: "1.2.3"})
-	if err != nil {
-		logger.Error().Err(err).Msg("Error initializing x-ray tracing")
-		os.Exit(1)
-	}
 }
 
 func main() {
@@ -29,6 +20,15 @@ func main() {
 	if c == nil {
 		logger.Error().Msg("Error configuring server")
 		os.Exit(1)
+	}
+
+	if c.IsProd() {
+		ec2.Init()
+		err := xray.Configure(xray.Config{ServiceVersion: "1.2.3"})
+		if err != nil {
+			logger.Error().Err(err).Msg("Error initializing x-ray tracing")
+			os.Exit(1)
+		}
 	}
 
 	// Create server

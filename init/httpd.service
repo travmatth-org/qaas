@@ -14,9 +14,9 @@ Restart=on-failure
 RestartSec=10
 
 WorkingDirectory = /srv/
-ExecStart = /usr/sbin/httpd
+ExecStart = /usr/sbin/httpd --prod
+WatchdogSec=10s
 KillSignal = SIGQUIT
-Environment=ENVIRONMENT=production
 
 PermissionsStartOnly=true
 ExecStartPre=/bin/mkdir -p /var/log/faas
