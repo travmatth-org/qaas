@@ -4,8 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"syscall"
 	"testing"
@@ -14,6 +17,7 @@ import (
 	"github.com/Travmatth/faas/internal/config"
 	"github.com/Travmatth/faas/internal/logger"
 	confighelpers "github.com/Travmatth/faas/test/utils/config"
+	"github.com/coreos/go-systemd/v22/daemon"
 )
 
 const (
@@ -159,5 +163,65 @@ func TestServer_ChecksListenerNotNil(t *testing.T) {
 		}
 	case <-time.After(3 * time.Second):
 		t.Fatal("Error: timeout exceeded")
+	}
+}
+
+func TestLivenessCheck(t *testing.T) {
+	// create dir for  socket
+	testDir, err := ioutil.TempDir("/tmp/", "test-")
+	if err != nil {
+		t.Error("Failed to create temp dir: ", err)
+	}
+	defer os.RemoveAll(testDir)
+
+	// create socket address
+	socket := filepath.Join(testDir, "notify-socket.sock")
+	uaddr := net.UnixAddr{Name: socket, Net: "unixgram"}
+	if err != nil {
+		t.Error("Error in creating socket address: ", err)
+	}
+
+	// announce socket address
+	conn, err := net.ListenUnixgram("unixgram", &uaddr)
+	if err != nil {
+		t.Error("Error in listening on socket", err)
+	}
+
+	// prepare server for livenesscheck
+	os.Setenv("NOTIFY_SOCKET", socket)
+	logged := confighelpers.ResetLogger()
+	mockResponse := func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte("OK"))
+	}
+	server := httptest.NewServer(http.HandlerFunc(mockResponse))
+	c := config.New()
+	c.IP = server.URL
+	c.Port = "8080"
+	s := New(c)
+
+	// perform livenesscheck
+	end := make(chan bool)
+	go func() {
+		s.LivenessCheck()
+		end <- true
+	}()
+
+	got := make([]byte, 10)
+	if n, err := conn.Read(got); err != nil {
+		t.Fatalf("Error reading %d from socket: %v", n, err)
+	} else if string(got) != daemon.SdNotifyWatchdog {
+		t.Fatalf("Error: %s!= %s\n%s",
+			string(got),
+			daemon.SdNotifyWatchdog,
+			logged.String())
+	}
+
+	// test function ends on error (here, closed connection)
+	interval, _ := s.GetLivenessCheckInterval()
+	conn.Close()
+	select {
+	case <-end:
+	case <-time.After(3 * interval * time.Second):
+		t.Fatal("Error: timeout exceeded in ending liveness check", interval)
 	}
 }

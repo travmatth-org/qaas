@@ -7,18 +7,20 @@ import (
 	"time"
 
 	"github.com/Travmatth/faas/internal/logger"
+	"github.com/coreos/go-systemd/daemon"
 )
 
 const (
-	defaultIP           = "0.0.0.0"
-	defaultPort         = ":80"
-	defaultReadTimeout  = 5
-	defaultWriteTimeout = 5
-	defaultStopTimeout  = 5
-	defaultIdleTimeout  = 5
-	index               = "index.html"
-	notFound            = "404.html"
-	name                = "faas"
+	defaultIP                    = "0.0.0.0"
+	defaultPort                  = ":80"
+	defaultReadTimeout           = 5
+	defaultWriteTimeout          = 5
+	defaultStopTimeout           = 5
+	defaultIdleTimeout           = 5
+	defaultLivenessCheckInterval = 10
+	index                        = "index.html"
+	notFound                     = "404.html"
+	name                         = "faas"
 )
 
 // Config manages the configuration options of the program.
@@ -79,6 +81,16 @@ func Build() *Config {
 		cwd, *ip, *port, *readTimeout, *writeTimeout,
 		*stopTimeout, *idleTimeout, *prod,
 	}
+}
+
+// GetLivenessCheckInterval returns the interval on which to conduct liveness
+// checks in production, uses socket to get httpd.service watchdog interval from
+// systemd daemon
+func (c Config) GetLivenessCheckInterval() (time.Duration, error) {
+	if c.IsProd() {
+		return daemon.SdWatchdogEnabled(false)
+	}
+	return defaultLivenessCheckInterval, nil
 }
 
 // GetReadTimeout returns the time.Duration of the read timeout

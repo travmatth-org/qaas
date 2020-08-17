@@ -11,11 +11,7 @@ import (
 	"github.com/aws/aws-xray-sdk-go/xray"
 )
 
-func init() {
-}
-
 func main() {
-	// Config vals of server
 	c := config.Build()
 	if c == nil {
 		logger.Error().Msg("Error configuring server")

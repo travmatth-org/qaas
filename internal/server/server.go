@@ -40,21 +40,25 @@ type Server struct {
 }
 
 // New configures and returns a server instance struct.
-// Accepts a config and zerolog.Logger struct for embedding
 func New(c *config.Config) *Server {
 	router := mux.NewRouter()
-	server := &http.Server{
-		Addr:         c.GetAddress(),
-		WriteTimeout: c.GetWriteTimeout(),
-		ReadTimeout:  c.GetReadTimeout(),
-		IdleTimeout:  c.GetIdleTimeout(),
-		Handler:      router,
+	return &Server{
+		Config: c,
+		Router: router,
+		Server: &http.Server{
+			Addr:         c.GetAddress(),
+			WriteTimeout: c.GetWriteTimeout(),
+			ReadTimeout:  c.GetReadTimeout(),
+			IdleTimeout:  c.GetIdleTimeout(),
+			Handler:      router,
+		},
+		stopTimeout:    c.GetStopTimeout(),
+		static:         make(map[string][]byte),
+		signalChannel:  make(chan os.Signal, 1),
+		errorChannel:   make(chan error, 1),
+		startedChannel: make(chan struct{}),
+		httpListener:   nil,
 	}
-	m := make(map[string][]byte)
-	sig := make(chan os.Signal, 1)
-	err := make(chan error, 1)
-	started := make(chan struct{})
-	return &Server{c, router, server, c.GetStopTimeout(), m, sig, err, started, nil}
 }
 
 // WrapRoute composes endpoints by wrapping destination handler with handler
@@ -138,7 +142,7 @@ func (s *Server) AcceptConnections() error {
 // LivenessCheck retrieves home page  to verify the liveness of the server,
 // then notifies the systemd daemon to pass the check.
 func (s *Server) LivenessCheck() {
-	interval, err := daemon.SdWatchdogEnabled(false)
+	interval, err := s.GetLivenessCheckInterval()
 	if err != nil || interval == 0 {
 		logger.Info().
 			Err(err).
@@ -147,12 +151,16 @@ func (s *Server) LivenessCheck() {
 		return
 	}
 	for {
-		_, err = http.Get("http://localhost:80")
+		// If server fails health check, systemd will restart
+		_, err = http.Get(s.GetAddress())
 		if err == nil {
-			// If server fails health check, systemd will restart
-			_, _ = daemon.SdNotify(false, daemon.SdNotifyWatchdog)
-		} else {
-			logger.Error().Msg("Liveness check failed")
+			logger.Error().Err(err).Msg("Liveness check failed")
+			return
+		}
+		_, err := daemon.SdNotify(false, daemon.SdNotifyWatchdog)
+		if err != nil {
+			logger.Error().Err(err).Msg("Error in systemd health check")
+			return
 		}
 		time.Sleep(interval)
 	}
