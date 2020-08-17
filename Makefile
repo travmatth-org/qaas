@@ -43,7 +43,7 @@ test.clean: clean
 	go clean -testcache $(MAIN)
 
 test: test.clean
-	go test -v ./...
+	AWS_XRAY_SDK_DISABLED=TRUE go test -v ./...
 
 check: lint vet test
 
