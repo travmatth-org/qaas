@@ -92,7 +92,7 @@ tf.destroy.cicd:
 tf.show:
 	@$(MAKE) show -C deploy/terraform
 
-tf.show:
+tf.ip:
 	@$(MAKE) ip -C deploy/terraform
 
 # makefile phony target 
