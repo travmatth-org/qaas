@@ -1,4 +1,3 @@
-variable "faas_iam_role" {}
 variable "github_repo" {}
 variable "codepipeline_artifact_bucket" {}
 variable "codedeploy_app_name" {}
@@ -11,7 +10,7 @@ variable "github_oauth_token" {}
 
 resource "aws_codepipeline" "codepipeline" {
   name     = "FaaSCodePipeline"
-  role_arn = var.faas_iam_role.arn
+  role_arn = aws_iam_role.codepipeline_role.arn
 
   artifact_store {
     location = var.codepipeline_artifact_bucket.bucket

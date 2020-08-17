@@ -50,14 +50,12 @@ resource "aws_key_pair" "ec2_key_pair" {
 	public_key = file("../../protected/faas_ec2.pub")
 }
 
-variable "faas_instance_profile" {}
-
 resource "aws_instance" "faas_service" {
 	ami						=  data.aws_ami.amazonlinux2.id
 	instance_type			= "t2.micro"
 	vpc_security_group_ids	= [aws_security_group.faas_public_http_ssh_sg.id]
 	subnet_id				= var.public_subnet.id
-	iam_instance_profile	= var.faas_instance_profile.name
+	iam_instance_profile	= aws_iam_instance_profile.faas_service.name
 	key_name				= aws_key_pair.ec2_key_pair.key_name
 	depends_on				= [var.internet_gateway]
 	user_data				= file("../../scripts/s3/user_data.sh")

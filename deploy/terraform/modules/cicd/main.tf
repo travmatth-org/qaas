@@ -2,19 +2,16 @@ variable "codebuild_logging_bucket" {}
 variable "tf_state_bucket" {}
 variable "codepipeline_artifact_bucket" {}
 variable "dynamodb_lock_state_table" {}
-variable "faas_iam_role" {}
 
 module "codebuild" {
   source = "./modules/Codebuild"
   codebuild_logging_bucket     = var.codebuild_logging_bucket
   codepipeline_artifact_bucket = var.codepipeline_artifact_bucket
   dynamodb_lock_state_table    = var.dynamodb_lock_state_table
-  faas_iam_role                = var.faas_iam_role
 }
 
 module "codedeploy" {
   source                        = "./modules/codedeploy"
-  faas_iam_role                = var.faas_iam_role
 }
 
 variable "github_repo" {
@@ -40,5 +37,4 @@ module "codepipeline" {
   codepipeline_artifact_bucket = var.codepipeline_artifact_bucket
   webhook_secret               = var.webhook_secret
   github_oauth_token           = var.github_oauth_token
-  faas_iam_role                = var.faas_iam_role
 }

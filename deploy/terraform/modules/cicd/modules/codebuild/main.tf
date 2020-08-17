@@ -1,13 +1,12 @@
 variable "codebuild_logging_bucket" {}
 variable "codepipeline_artifact_bucket" {}
 variable "dynamodb_lock_state_table" {}
-variable "faas_iam_role" {}
 
 resource "aws_codebuild_project" "faas_project" {
   name          = "FaaSCodeBuildProject"
   description   = "Terraform codebuild project"
   build_timeout = "5"
-  service_role  = var.faas_iam_role.arn
+  service_role  = aws_iam_role.codebuild_role.arn
 
   artifacts {
     type = "CODEPIPELINE"

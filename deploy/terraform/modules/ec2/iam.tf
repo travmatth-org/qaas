@@ -9,8 +9,6 @@ data "aws_iam_policy_document" "assume_role" {
 				"ec2.amazonaws.com",
 				"codedeploy.amazonaws.com",
 				"s3.amazonaws.com",
-				"codepipeline.amazonaws.com",
-				"codebuild.amazonaws.com"
 			]
 		}
 	}
@@ -33,11 +31,7 @@ data "aws_iam_policy_document" "faas_cicd_policy" {
 			"s3:*",
 			"logs:*",
 			"elasticloadbalancing:*",
-			"iam:*", #?
 			"codedeploy:*",
-			"codepipeline:*",
-			"codebuild:*",
-			"ec2:*"
 		]
 		resources = ["*"]
 	}
@@ -91,8 +85,4 @@ resource "aws_iam_instance_profile" "faas_service" {
   name = "faas_service"
   path = "/"
   role = aws_iam_role.faas.name
-}
-
-output "faas_instance_profile" {
-	value = aws_iam_instance_profile.faas_service
 }
