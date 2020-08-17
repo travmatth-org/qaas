@@ -92,7 +92,8 @@ tf.destroy.cicd:
 tf.show:
 	@$(MAKE) show -C deploy/terraform
 
-# ssh into ec2 instance using key
+tf.show:
+	@$(MAKE) ip -C deploy/terraform
 
 # makefile phony target 
 .PHONY: default build build.all run get clean \

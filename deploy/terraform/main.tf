@@ -86,10 +86,14 @@ module "network" {
 }
 
 module "ec2" {
-  source           = "./modules/ec2"
-  public_vpc       = module.network.public_vpc
-  public_subnet    = module.network.public_subnet
-  internet_gateway = module.network.internet_gateway
-  codepipeline_artifact_bucket = module.tf_backend.codepipeline_artifact_bucket
-  faas_instance_profile = module.iam.faas_instance_profile
+  source                        = "./modules/ec2"
+  public_vpc                    = module.network.public_vpc
+  public_subnet                 = module.network.public_subnet
+  internet_gateway              = module.network.internet_gateway
+  codepipeline_artifact_bucket  = module.tf_backend.codepipeline_artifact_bucket
+  faas_instance_profile         = module.iam.faas_instance_profile
+}
+
+output "ec2_ip" {
+  value = module.ec2.faas_eip
 }

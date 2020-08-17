@@ -21,8 +21,8 @@ destroy.cicd:
 show:
 	terraform show;
 
-show.eip:
-	@terraform show -json | jq -r '.values[]?.child_modules[]?.resources[]? | select(.type == "aws_instance") | .values.public_ip';
+tf.ip:
+	@terraform output ec2_ip
 
 # makefile phony target
 .PHONY: init plan apply destroy destroy.ec2 show show.eip

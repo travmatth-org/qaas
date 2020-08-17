@@ -75,3 +75,7 @@ resource "aws_eip" "faas_eip" {
 		FaaS = "true"
 	}
 }
+
+output "faas_eip" {
+	value	= aws_eip.faas_eip.public_ip
+}
