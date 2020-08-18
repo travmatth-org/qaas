@@ -50,7 +50,10 @@ check: lint vet test
 validate.sysd:
 	sudo systemd-analyze verify init/httpd.service
 
-cicd: check
+analyze.sysd:
+	sudo systemd-analyze security init/httpd.service
+
+cicd: check 
 
 test.codebuild:
 	./vendor/codebuild_build.sh \

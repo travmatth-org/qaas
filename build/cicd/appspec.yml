@@ -8,6 +8,8 @@ files:
     destination: /usr/lib/systemd/system
   - source: ./httpd.socket
     destination: /usr/lib/systemd/system
+  - source: ./security.conf
+    destination: /usr/lib/systemd/system/httpd.service.d/security.conf
   - source: ./assets.zip
     destination: /srv
 

@@ -1,3 +1,6 @@
+Description=Job running the FaaS http server
+Documentation=https://www.github.com/Travmatth-org/faas
+
 [Unit]
 Description = Fortunes As A Service HTTP Server
 ConditionPathExists=/usr/sbin/httpd
@@ -6,8 +9,6 @@ Requires=httpd.socket
 
 [Service]
 Type=notify
-User=faas
-Group=faas
 LimitNOFILE=1024
 
 Restart=on-failure
