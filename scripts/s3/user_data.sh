@@ -15,6 +15,9 @@ sudo ./install auto
 sudo service codedeploy-agent status
 sudo rm install
 
+# create user for faas service
+sudo useradd -s /sbin/nologin -M faas
+
 # create dirs for static content
 sudo mkdir -p web/www/static
 # create log dir
