@@ -83,6 +83,10 @@ tf.plan:
 tf.apply:
 	@$(MAKE) apply -C deploy/terraform
 
+tf.all:
+	@$(MAKE) plan -C deploy/terraform
+	@$(MAKE) apply -C deploy/terraform
+
 tf.destroy:
 	@$(MAKE) destroy -C deploy/terraform
 
