@@ -9,7 +9,7 @@ files:
   - source: ./httpd.socket
     destination: /usr/lib/systemd/system
   - source: ./security.conf
-    destination: /usr/lib/systemd/system/httpd.service.d/security.conf
+    destination: /usr/lib/systemd/system/httpd.service.d/
   - source: ./assets.zip
     destination: /srv
 
@@ -19,10 +19,6 @@ permissions:
     mode: 744
     owner: faas
     group: faas
-  # - object: httpd
-  #   mode: 755
-  #   owner: faas
-  #   group: faas
 
 hooks:
   BeforeInstall:

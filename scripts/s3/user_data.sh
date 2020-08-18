@@ -13,6 +13,7 @@ wget https://aws-codedeploy-us-west-1.s3.us-west-1.amazonaws.com/latest/install
 chmod +x ./install
 sudo ./install auto
 sudo service codedeploy-agent status
+sudo rm install
 
 # create dirs for static content
 sudo mkdir -p web/www/static

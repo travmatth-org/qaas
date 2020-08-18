@@ -20,11 +20,9 @@ WatchdogSec=10s
 KillSignal = SIGQUIT
 
 PermissionsStartOnly=true
-ExecStartPre=/bin/mkdir -p /var/log/faas
-ExecStartPre=/bin/chown faas /var/log/faas
-ExecStartPre=/bin/chmod 755 /var/log/faas
 
 # Logging details
+LogsDirectory=/var/logs/faas
 StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=faas
