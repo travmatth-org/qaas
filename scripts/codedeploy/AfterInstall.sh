@@ -6,4 +6,5 @@ sudo rm /srv/assets.zip
 # shellcheck disable=SC2046
 sudo chmod 0444 $(find /srv -type f)
 # enable faas service
+sudo systemctl daemon-reload
 sudo systemctl enable httpd

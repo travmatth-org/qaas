@@ -21,7 +21,7 @@ destroy.cicd:
 show:
 	terraform show;
 
-tf.ip:
+ip:
 	@terraform output ec2_ip
 
 # makefile phony target

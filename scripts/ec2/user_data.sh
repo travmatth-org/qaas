@@ -73,20 +73,6 @@ cat << 'EOF' | sudo tee /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-a
             "InstanceType"
          ]
       ]
-   },
-   "logs": {
-      "logs_collected": {
-         "files": {
-            "collect_list": [
-               {
-                  "file_path": "/var/log/httpd.log*",
-                  "log_group_name": "faas-httpd-logs",
-                  "log_stream_name": "ec2-${instance_id}-logs"
-               }
-            ]
-         }
-      },
-      "log_stream_name": "${instance_id}/log-stream"
    }
 }
 EOF
