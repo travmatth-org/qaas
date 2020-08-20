@@ -67,3 +67,21 @@ resource "aws_security_group" "ephemeral_out" {
 		FaaS = "true"
 	}
 }
+
+
+resource "aws_security_group" "https_out" {
+	name		= "faas_https_out"
+	vpc_id		= var.public_vpc.id
+	description	= "allow https egress traffic"
+
+	egress {
+		from_port = 443
+		to_port = 443
+		protocol = "tcp"
+		cidr_blocks = ["0.0.0.0/0"]
+	}
+
+	tags = {
+		FaaS = "true"
+	}
+}

@@ -25,6 +25,7 @@ resource "aws_instance" "faas_service" {
 		aws_security_group.http_out.id,
 		aws_security_group.ssh_in.id,
 		aws_security_group.ephemeral_out.id,
+		aws_security_group.https_out.id,
 	]
 	subnet_id				= var.public_subnet.id
 	iam_instance_profile	= aws_iam_instance_profile.faas_service.name
