@@ -1,41 +1,6 @@
-variable "public_vpc" {}
 variable "public_subnet" {}
 variable "internet_gateway" {}
 variable "codepipeline_artifact_bucket" {}
-
-resource "aws_security_group" "faas_public_http_ssh_sg" {
-	name		= "FaaS Public HTTP/SSH"
-	vpc_id		= var.public_vpc.id
-	description	= "Security group for web that allows web traffic from internet"
-
-	# http
-	ingress {
-		from_port = 80
-		to_port = 80
-		protocol = "tcp"
-		cidr_blocks = ["0.0.0.0/0"]
-	}
-
-	# ssh
-	ingress { 
-		from_port = 22
-		to_port = 22
-		protocol = "tcp"
-		cidr_blocks = ["0.0.0.0/0"]
-	}
-
-	# allow egress from ephemeral ports
-	egress {
-		from_port = 1024
-		to_port = 65535
-		protocol = "tcp"
-		cidr_blocks = ["0.0.0.0/0"]
-	}
-
-	tags = {
-		FaaS = "true"
-	}
-}
 
 data "aws_ami" "amazonlinux2" {
     owners		= ["amazon"]
@@ -55,7 +20,12 @@ resource "aws_key_pair" "ec2_key_pair" {
 resource "aws_instance" "faas_service" {
 	ami						=  data.aws_ami.amazonlinux2.id
 	instance_type			= "t2.micro"
-	vpc_security_group_ids	= [aws_security_group.faas_public_http_ssh_sg.id]
+	vpc_security_group_ids	= [
+		aws_security_group.http_in.id,
+		aws_security_group.http_out.id,
+		aws_security_group.ssh_in.id,
+		aws_security_group.ephemeral_out.id,
+	]
 	subnet_id				= var.public_subnet.id
 	iam_instance_profile	= aws_iam_instance_profile.faas_service.name
 	key_name				= aws_key_pair.ec2_key_pair.key_name
