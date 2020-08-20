@@ -20,7 +20,7 @@ build.all: build
 	cp scripts/codedeploy/* dist/
 
 run: build
-	./$(APPLICATION) --port $(TEST_PORT) --static web
+	./$(APPLICATION) --port $(TEST_PORT)
 
 get: $(MAIN)
 	go get -v -t -d ./...
