@@ -167,12 +167,6 @@ resource "aws_route_table" "faas_route_table" {
 	}
 }
 
-# resource "aws_route" "faas_route" {
-# 	route_table_id = aws_route_table.faas_route_table.id
-# 	destination_cidr_block = "0.0.0.0/0"
-# 	gateway_id = aws_internet_gateway.faas.id
-# }
-
 resource "aws_route_table_association" "faas_public" {
 	subnet_id = aws_subnet.public_subnet.id
 	route_table_id = aws_route_table.faas_route_table.id

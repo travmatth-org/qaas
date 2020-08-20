@@ -131,16 +131,22 @@ sudo systemctl start vector
 sudo systemctl is-active --quiet vector
 
 # add functions to bashrc
-cat << BASHRC > /home/ec2-user/.bashrc
-# https://stackoverflow.com/questions/23151425/how-to-run-cloud-init-manually/23152036
-redo-cloud-init() {
-	sudo cloud-init clean;
-	sudo cloud-init start;
-}
+cat <<- BASHRC > /home/ec2-user/.bashrc
+   # https://stackoverflow.com/questions/23151425/how-to-run-cloud-init-manually/23152036
+   redo-cloud-init() {
+      sudo cloud-init clean;
+      sudo cloud-init init;
+   }
 
-alias ..="cd .."
-alias=logs="journalctl -xe --no-pager"
-alias httpd-status="sudo systemctl status httpd"
-alias httpd-logs="journalctl -xe --no-pager -u httpd"
-alias fhere="find . -name"
+   alias ..="cd .."
+   alias=logs="journalctl -xe --no-pager"
+   alias httpd-status="sudo systemctl status httpd"
+   alias httpd-logs="journalctl -xe --no-pager -u httpd"
+   alias fhere="find . -name"
 BASHRC
+
+cat <<-BASHPROFILE > /home/ec2-user/.bash_profile
+   if [ -f ~/.bashrc ]; then
+   . ~/.bashrc
+   fi
+BASHPROFILE
