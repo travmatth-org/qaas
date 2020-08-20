@@ -8,6 +8,7 @@ resource "aws_security_group" "faas_public_http_ssh_sg" {
 	vpc_id		= var.public_vpc.id
 	description	= "Security group for web that allows web traffic from internet"
 
+	# http
 	ingress {
 		from_port = 80
 		to_port = 80
@@ -15,18 +16,19 @@ resource "aws_security_group" "faas_public_http_ssh_sg" {
 		cidr_blocks = ["0.0.0.0/0"]
 	}
 
-	ingress {
+	# ssh
+	ingress { 
 		from_port = 22
 		to_port = 22
 		protocol = "tcp"
 		cidr_blocks = ["0.0.0.0/0"]
 	}
 
-	# allow egress from all ports
+	# allow egress from ephemeral ports
 	egress {
-		from_port = 0
-		to_port = 0
-		protocol = "-1"
+		from_port = 1024
+		to_port = 65535
+		protocol = "tcp"
 		cidr_blocks = ["0.0.0.0/0"]
 	}
 
