@@ -21,6 +21,8 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/justinas/alice"
 	"github.com/rs/zerolog/hlog"
+
+	"github.com/NYTimes/gziphandler"
 )
 
 // Server represents the running server with embedded
@@ -63,8 +65,10 @@ func New(c *config.Config) *Server {
 
 // WrapRoute composes endpoints by wrapping destination handler with handler
 // pipeline providing tracing with aws x-ray, injecting logging middleware
-// with request details into the context, and error recovery middleware
+// with request details into the context, and error recovery middleware,
+// and gzipping the response
 func (s *Server) WrapRoute(h http.HandlerFunc) http.HandlerFunc {
+	gzippedHandler := gziphandler.GzipHandler(h).ServeHTTP
 	return xray.Handler(
 		xray.NewFixedSegmentNamer("faas-httpd"),
 		alice.New(
@@ -75,7 +79,7 @@ func (s *Server) WrapRoute(h http.HandlerFunc) http.HandlerFunc {
 			hlog.RequestHandler("dest"),
 			hlog.RefererHandler("referer"),
 			middleware.Log,
-		).ThenFunc(h)).ServeHTTP
+		).ThenFunc(gzippedHandler)).ServeHTTP
 }
 
 // RegisterHandlers attemtps to prepare and register the specified

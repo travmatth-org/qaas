@@ -3,6 +3,7 @@ module github.com/Travmatth/faas
 go 1.12
 
 require (
+	github.com/NYTimes/gziphandler v1.1.1
 	github.com/aws/aws-xray-sdk-go v1.1.0
 	github.com/coreos/go-systemd v0.0.0-20190321100706-95778dfbb74e
 	github.com/coreos/go-systemd/v22 v22.1.0
