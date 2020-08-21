@@ -45,15 +45,10 @@ test.clean: clean
 test: test.clean
 	AWS_XRAY_SDK_DISABLED=TRUE go test -v ./...
 
-check: lint vet test
-
 validate.sysd:
 	sudo systemd-analyze verify init/httpd.service
 
-analyze.sysd:
-	sudo systemd-analyze security init/httpd.service
-
-cicd: check 
+cicd: lint vet test 
 
 test.codebuild:
 	./vendor/codebuild_build.sh \
@@ -101,6 +96,9 @@ tf.show:
 
 tf.ip:
 	@$(MAKE) ip -C deploy/terraform
+
+count.lines:
+	@git ls-files | xargs wc -l
 
 # makefile phony target 
 .PHONY: default build build.all run get clean \
