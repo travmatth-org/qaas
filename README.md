@@ -32,4 +32,4 @@ make coverage.view
 This website is designed to be deployed to AWS, with the infrastructure specified in `deploy/terraform`. This infrastructure can be created with the `make tf.all` Makefile command. This infrastructure employs a CICD pipeline to push the latest application & assets onto the EC2 server, using AWS CodePipeline. Systemd is used to manage the process and its sockets, provide logging, and sandboxing features to isolate from the rest of the system. Observability is gained by using [vector](timber.io) to forward the journald logs to cloudwatch, and the cloudwatch-agent to forward system metrics. HTTP handlers are instrumented using AWS X-Ray SDK. 
 
 ## Screenshots
-[Landing Page](web/screenshots/screenshot.png)
+![Landing Page](web/screenshots/screenshot.png)
