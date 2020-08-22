@@ -15,25 +15,38 @@ data "aws_iam_policy_document" "assume_role" {
 }
 
 resource "aws_iam_role" "faas" {
-  name  = "faas_role"
-  assume_role_policy = data.aws_iam_policy_document.assume_role.json
+  name					= "faas_role"
+  assume_role_policy	= data.aws_iam_policy_document.assume_role.json
 }
 
 output "faas_iam_role" {
 	value = aws_iam_role.faas
 }
 
+variable "codepipeline_artifact_bucket" {}
+
 data "aws_iam_policy_document" "faas_cicd_policy" {
+	# allow agents to query for metadata
 	statement {
-		sid = "AWS"
-		effect = "Allow"
+		effect	= "Allow"
 		actions = [
-			"s3:*",
-			"logs:*",
-			"elasticloadbalancing:*",
-			"codedeploy:*",
+			"ec2:DescribeTags"
 		]
 		resources = ["*"]
+	}
+
+	# allow codedeploy deployments 
+	statement {
+		effect	= "Allow"
+		actions	= [
+			"s3:Get*",
+			"s3:List*",
+			"s3:GetEncryptionConfiguration"
+		]
+		resources = [
+			"${var.codepipeline_artifact_bucket.arn}/*",
+			"arn:aws:s3:::aws-codedeploy-us-west-1/*"
+		]
 	}
 	
 	# allow cloudwatch-agent to collect and send logs, metrics
@@ -42,13 +55,10 @@ data "aws_iam_policy_document" "faas_cicd_policy" {
 		effect  = "Allow"
 		actions = [
 			"cloudwatch:PutMetricData",
-			"ec2:DescribeVolumes",
-			"ec2:DescribeTags",
 			"logs:PutLogEvents",
 			"logs:DescribeLogStreams",
 			"logs:DescribeLogGroups",
 			"logs:CreateLogStream",
-			"logs:CreateLogGroup"
 		]
 		resources = ["*"]
 	}
@@ -69,10 +79,10 @@ data "aws_iam_policy_document" "faas_cicd_policy" {
 }
 
 resource "aws_iam_policy" "cicd" {
-  name  = "faas_role_policy"
-  description = "A policy for CodeDeploy"
-  policy = data.aws_iam_policy_document.faas_cicd_policy.json
-  depends_on = [aws_iam_role.faas]
+  name			= "faas_role_policy"
+  description	= "A policy for CodeDeploy"
+  policy		= data.aws_iam_policy_document.faas_cicd_policy.json
+  depends_on	= [aws_iam_role.faas]
 }
 
 resource "aws_iam_role_policy_attachment" "attach_custom_policy" {

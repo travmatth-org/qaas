@@ -74,6 +74,7 @@ module "cicd" {
   codepipeline_artifact_bucket = module.tf_backend.codepipeline_artifact_bucket
   dynamodb_lock_state_table    = module.tf_backend.dynamodb_lock_state_table
   github_repo                  = data.github_repository.faas
+  account_id                   = data.aws_caller_identity.current.account_id
 }
 
 module "network" {

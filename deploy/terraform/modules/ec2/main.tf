@@ -1,6 +1,5 @@
 variable "public_subnet" {}
 variable "internet_gateway" {}
-variable "codepipeline_artifact_bucket" {}
 
 data "aws_ami" "amazonlinux2" {
     owners		= ["amazon"]

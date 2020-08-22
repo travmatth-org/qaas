@@ -6,10 +6,10 @@ resource "aws_security_group" "http_in" {
 	description	= "allow http ingress traffic"
 
 	ingress {
-		from_port = 80
-		to_port = 80
-		protocol = "tcp"
-		cidr_blocks = ["0.0.0.0/0"]
+		from_port	= 80
+		to_port		= 80
+		protocol	= "tcp"
+		cidr_blocks	= ["0.0.0.0/0"]
 	}
 
 	tags = {
@@ -23,10 +23,10 @@ resource "aws_security_group" "http_out" {
 	description	= "allow http egress traffic"
 
 	egress {
-		from_port = 80
-		to_port = 80
-		protocol = "tcp"
-		cidr_blocks = ["0.0.0.0/0"]
+		from_port	= 80
+		to_port		= 80
+		protocol	= "tcp"
+		cidr_blocks	= ["0.0.0.0/0"]
 	}
 
 	tags = {
@@ -40,10 +40,10 @@ resource "aws_security_group" "ssh_in" {
 	description	= "allow ssh ingress traffic"
 
 	ingress { 
-		from_port = 22
-		to_port = 22
-		protocol = "tcp"
-		cidr_blocks = ["0.0.0.0/0"]
+		from_port	= 22
+		to_port		= 22
+		protocol	= "tcp"
+		cidr_blocks	= ["0.0.0.0/0"]
 	}
 
 	tags = {
@@ -57,9 +57,9 @@ resource "aws_security_group" "ephemeral_out" {
 	description	= "allow egress traffic to ephemeral ports"
 
 	egress {
-		from_port = 1024
-		to_port = 65535
-		protocol = "tcp"
+		from_port	= 1024
+		to_port		= 65535
+		protocol	= "tcp"
 		cidr_blocks = ["0.0.0.0/0"]
 	}
 
@@ -75,10 +75,10 @@ resource "aws_security_group" "https_out" {
 	description	= "allow https egress traffic"
 
 	egress {
-		from_port = 443
-		to_port = 443
-		protocol = "tcp"
-		cidr_blocks = ["0.0.0.0/0"]
+		from_port	= 443
+		to_port		= 443
+		protocol	= "tcp"
+		cidr_blocks	= ["0.0.0.0/0"]
 	}
 
 	tags = {

@@ -21,10 +21,10 @@ resource "aws_codedeploy_deployment_group" "faas_in_place" {
 	}
 }
 
-output "app_name" {
-	value = aws_codedeploy_deployment_group.faas_in_place.app_name
+output "app" {
+	value = aws_codedeploy_app.faas
 }
 
-output "deployment_group_name" {
-	value = aws_codedeploy_deployment_group.faas_in_place.deployment_group_name
+output "deployment_group" {
+	value = aws_codedeploy_deployment_group.faas_in_place
 }

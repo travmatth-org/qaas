@@ -1,7 +1,7 @@
 data "aws_iam_policy_document" "codedeploy" {
 	statement {
-		actions = ["sts:AssumeRole"]
-		effect = "Allow"
+		actions	= ["sts:AssumeRole"]
+		effect	= "Allow"
 
 		principals {
 			type		= "Service"

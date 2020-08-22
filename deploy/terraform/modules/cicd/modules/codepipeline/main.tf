@@ -1,7 +1,6 @@
 variable "github_repo" {}
 variable "codepipeline_artifact_bucket" {}
-variable "codedeploy_app_name" {}
-variable "codedeploy_group_name" {}
+variable "codedeploy" {}
 variable "codebuild_logging_bucket" {}
 variable "dynamodb_lock_state_table" {}
 variable "codebuild_project" {}
@@ -79,8 +78,8 @@ resource "aws_codepipeline" "codepipeline" {
       version         = "1"
       input_artifacts = ["build_artifact"]
       configuration = {
-        ApplicationName     = var.codedeploy_app_name
-        DeploymentGroupName = var.codedeploy_group_name
+        ApplicationName     = var.codedeploy.app.name
+        DeploymentGroupName = var.codedeploy.deployment_group.deployment_group_name
       }
     }
   }
@@ -111,7 +110,7 @@ resource "aws_codepipeline_webhook" "faas" {
 }
 
 resource "github_repository_webhook" "faas" {
-  repository = var.github_repo.name
+repository = var.github_repo.name
   events = ["push"]
 
   configuration {
