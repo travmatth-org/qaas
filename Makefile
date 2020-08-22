@@ -97,6 +97,8 @@ tf.show:
 tf.ip:
 	@$(MAKE) ip -C deploy/terraform
 
+# misc
+
 count.lines:
 	@git ls-files | xargs wc -l
 
