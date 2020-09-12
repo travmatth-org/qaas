@@ -46,7 +46,7 @@ clean:
 
 lint:
 	golint -set_exit_status ./...
-	shellcheck $(shell find . -type f -name "*.sh" -not -path "*vendor*")
+	# shellcheck $(shell find . -type f -name "*.sh" -not -path "*vendor*")
 
 vet:
 	go vet $(MAIN)
