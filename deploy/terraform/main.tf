@@ -81,14 +81,16 @@ module "network" {
   source = "./modules/network"
 }
 
-module "ec2" {
-  source                        = "./modules/ec2"
-  public_vpc                    = module.network.public_vpc
-  public_subnet                 = module.network.public_subnet
+module "asg" {
+  source                        = "./modules/asg"
+  vpc                           = module.network.vpc
+  public_subnets                = module.network.public_subnets
   internet_gateway              = module.network.internet_gateway
   codepipeline_artifact_bucket  = module.tf_backend.codepipeline_artifact_bucket
+  account_id                    = data.aws_caller_identity.current.account_id
+  user                          = basename(data.aws_caller_identity.current.arn)
 }
 
-output "ec2_ip" {
-  value = module.ec2.faas_eip
+output "asg_ip" {
+  value = module.asg.lb_dns_name
 }

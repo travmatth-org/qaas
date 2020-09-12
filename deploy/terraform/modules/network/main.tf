@@ -1,13 +1,14 @@
 resource "aws_vpc" "local" {
-	cidr_block           = "192.168.0.0/16"
+	cidr_block           = "10.0.0.0/16"
 	enable_dns_hostnames = true
 
 	tags = {
-		Faas = "true"
+		faas	= "vpc"
+		public	= "true"
 	}
 }
 
-output "public_vpc" {
+output "vpc" {
 	value = aws_vpc.local
 }
 
@@ -15,7 +16,8 @@ resource "aws_internet_gateway" "faas" {
 	vpc_id = aws_vpc.local.id
 
 	tags = {
-		FaaS = "gateway"
+		faas	= "gateway"
+		public	= "true"
 	}
 }
 
@@ -23,135 +25,44 @@ output "internet_gateway" {
 	value = aws_internet_gateway.faas
 }
 
-resource "aws_subnet" "public_subnet" {
-	vpc_id                  = aws_vpc.local.id
-	cidr_block              = "192.168.0.0/24"
-	map_public_ip_on_launch = true 
-	availability_zone       = "us-west-1b"
+data "aws_availability_zones" "available" {}
+
+variable public_subnets {
+	description	= "List of public subnets in the VPC"
+	type		= list
+	default		= [
+		"10.0.0.0/18",
+		"10.0.64.0/18"
+	]
+}
+
+variable private_subnets {
+	description	= "List of private subnets in the VPC"
+	type		= list
+	default		= [
+		"10.0.128.0/18",
+		"10.0.192.0/18"
+	]
+}
+
+
+resource "aws_subnet" "public_subnets" {
+	count					= 2
+	vpc_id                  = aws_vpc.local.id	
+	cidr_block				= var.public_subnets[count.index] 
+	availability_zone		= data.aws_availability_zones.available.names[count.index]
+	map_public_ip_on_launch = true
 	depends_on				= [aws_internet_gateway.faas]
 
 	tags = {
-		FaaS = "public-subnet"
+		faas	= "subnet"
+		public	= "true"
+		name	= "public-subnet-az-${count.index}"
 	}
 }
 
-output "public_subnet" {
-	value = aws_subnet.public_subnet
-}
-
-resource "aws_network_acl" "public_acl" {
-	vpc_id		= aws_vpc.local.id
-	subnet_ids	= [aws_subnet.public_subnet.id]
-
-	tags = {
-		FaaS = "true"
-	}
-}
-
-resource "aws_network_acl_rule" "http_in" {
-	network_acl_id	= aws_network_acl.public_acl.id
-	rule_number		= 100
-	egress			= false
-	protocol		= "tcp"
-	rule_action		= "allow"
-	from_port		= 80
-	to_port			= 80
-	cidr_block		= "0.0.0.0/0"
-}
-
-resource "aws_network_acl_rule" "http_out" {
-	network_acl_id	= aws_network_acl.public_acl.id
-	rule_number		= 100
-	egress			= true
-	protocol		= "tcp"
-	rule_action		= "allow"
-	from_port		= 80
-	to_port			= 80
-	cidr_block		= "0.0.0.0/0"
-}
-
-resource "aws_network_acl_rule" "ssh_in" {
-	network_acl_id	= aws_network_acl.public_acl.id
-	rule_number		= 110
-	egress			= false
-	protocol		= "tcp"
-	rule_action		= "allow"
-	from_port		= 22
-	to_port			= 22
-	cidr_block		= "0.0.0.0/0"
-}
-
-resource "aws_network_acl_rule" "ssh_out" {
-	network_acl_id	= aws_network_acl.public_acl.id
-	rule_number		= 110
-	egress			= true
-	protocol		= "tcp"
-	rule_action		= "allow"
-	from_port		= 22
-	to_port			= 22
-	cidr_block		= "0.0.0.0/0"
-}
-
-resource "aws_network_acl_rule" "https_in" {
-	network_acl_id	= aws_network_acl.public_acl.id
-	rule_number		= 120
-	egress			= false
-	protocol		= "tcp"
-	rule_action		= "allow"
-	from_port		= 443
-	to_port			= 443
-	cidr_block		= "0.0.0.0/0"
-}
-
-resource "aws_network_acl_rule" "https_out" {
-	network_acl_id	= aws_network_acl.public_acl.id
-	rule_number		= 120
-	egress			= true
-	protocol		= "tcp"
-	rule_action		= "allow"
-	from_port		= 443
-	to_port			= 443
-	cidr_block		= "0.0.0.0/0"
-}
-
-resource "aws_network_acl_rule" "ephemeral_in" {
-	network_acl_id	= aws_network_acl.public_acl.id
-	rule_number		= 130
-	egress			= false
-	protocol		= "tcp"
-	rule_action		= "allow"
-	from_port		= 1024
-	to_port			= 65535
-	cidr_block		= "0.0.0.0/0"
-}
-
-resource "aws_network_acl_rule" "ephemeral_out" {
-	network_acl_id	= aws_network_acl.public_acl.id
-	rule_number		= 130
-	egress			= true
-	protocol		= "tcp"
-	rule_action		= "allow"
-	from_port		= 1024
-	to_port			= 65535
-	cidr_block		= "0.0.0.0/0"
-}
-
-resource "aws_network_acl_rule" "deny_in" {
-	network_acl_id	= aws_network_acl.public_acl.id
-	rule_number		= 1000
-	egress			= false
-	protocol		= "-1"
-	rule_action		= "deny"
-	cidr_block		= "0.0.0.0/0"
-}
-
-resource "aws_network_acl_rule" "deny_out" {
-	network_acl_id = aws_network_acl.public_acl.id
-	rule_number	= 1000
-	egress		= true
-	protocol	= "-1"
-	rule_action	= "deny"
-	cidr_block	= "0.0.0.0/0"
+output "public_subnets" {
+	value = aws_subnet.public_subnets
 }
 
 resource "aws_route_table" "faas_route_table" {
@@ -163,11 +74,12 @@ resource "aws_route_table" "faas_route_table" {
 	}
 
 	tags = {
-		FaaS = "public-route-table"
+		faas = "public-route-table"
 	}
 }
 
 resource "aws_route_table_association" "faas_public" {
-	subnet_id		= aws_subnet.public_subnet.id
+	count			= 2
+	subnet_id		= aws_subnet.public_subnets[count.index].id
 	route_table_id	= aws_route_table.faas_route_table.id
 }

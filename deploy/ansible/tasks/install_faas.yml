@@ -1,0 +1,59 @@
+---
+  - name: Add user "faas"
+    user:
+      name: faas
+      shell: /sbin/nologin
+      comment: "faas nologin User"
+      state: present
+    become: yes
+
+  - name: Create directories for static content
+    file:
+      path: /srv/www/static
+      state: directory
+    become: yes
+
+  - name: Create directory for httpd.service drop-in
+    file:
+      path: /usr/lib/systemd/system/httpd.service.d/
+      state: directory
+    become: yes
+
+  - name: Copy httpd to instance
+    copy:
+      src: ../../../dist/httpd
+      dest: /usr/sbin/httpd
+      owner: ec2-user
+      group: ec2-user
+      mode: 0755
+
+  - name: Copy httpd.service to instance
+    copy:
+      src: ../../../init/httpd.service
+      dest: /usr/lib/systemd/system
+
+  - name: Copy httpd.socket to instance
+    copy:
+      src: ../../../init/httpd.socket
+      dest: /usr/lib/systemd/system
+
+  - name: Copy security.conf to instance
+    copy:
+      src: ../../../init/security.conf
+      dest: /usr/lib/systemd/system/httpd.service.d/security.conf
+
+  - name: Extract assets.zip to /srv on instance
+    unarchive:
+      src: ../../../dist/assets.zip
+      dest: /srv
+
+  - name: Enable httpd service
+    become: true
+    systemd:
+      name: httpd
+      daemon_reload: true
+      enabled: true
+      state: restarted
+
+  - name: Test httpd status
+    command: systemctl is-active --quiet httpd

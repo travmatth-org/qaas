@@ -1,8 +1,6 @@
-variable "public_vpc" {}
-
 resource "aws_security_group" "http_in" {
 	name		= "faas_http_in"
-	vpc_id		= var.public_vpc.id
+	vpc_id		= var.vpc.id
 	description	= "allow http ingress traffic"
 
 	ingress {
@@ -19,7 +17,7 @@ resource "aws_security_group" "http_in" {
 
 resource "aws_security_group" "http_out" {
 	name		= "faas_http_out"
-	vpc_id		= var.public_vpc.id
+	vpc_id		= var.vpc.id
 	description	= "allow http egress traffic"
 
 	egress {
@@ -36,7 +34,7 @@ resource "aws_security_group" "http_out" {
 
 resource "aws_security_group" "ssh_in" {
 	name		= "faas_ssh_in"
-	vpc_id		= var.public_vpc.id
+	vpc_id		= var.vpc.id
 	description	= "allow ssh ingress traffic"
 
 	ingress { 
@@ -53,7 +51,7 @@ resource "aws_security_group" "ssh_in" {
 
 resource "aws_security_group" "ephemeral_out" {
 	name		= "faas_ephemeral_out"
-	vpc_id		= var.public_vpc.id
+	vpc_id		= var.vpc.id
 	description	= "allow egress traffic to ephemeral ports"
 
 	egress {
@@ -71,7 +69,7 @@ resource "aws_security_group" "ephemeral_out" {
 
 resource "aws_security_group" "https_out" {
 	name		= "faas_https_out"
-	vpc_id		= var.public_vpc.id
+	vpc_id		= var.vpc.id
 	description	= "allow https egress traffic"
 
 	egress {

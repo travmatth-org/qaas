@@ -1,0 +1,48 @@
+---
+  - name: Install CloudWatch daemon from remote repo
+    yum:
+      name: https://s3.us-west-1.amazonaws.com/amazoncloudwatch-agent-us-west-1/amazon_linux/amd64/latest/amazon-cloudwatch-agent.rpm
+      state: present
+
+  - name: Create directories for cloudwatch config
+    file:
+      path: /opt/aws/amazon-cloudwatch-agent/etc
+      state: directory
+    become: yes
+
+  - name: Copy CloudWatch config to instance
+    copy:
+      src: ../../../configs/amazon-cloudwatch-agent.json
+      dest: /opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+      owner: ec2-user
+      group: ec2-user
+
+  - name: Add log rotation for amazon-cloudwatch-agent
+    copy:
+      dest: '/etc/logrotate.d/aws-cwa'
+      owner: 'root'
+      group: 'root'
+      mode: 0644
+      content: |
+        /opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.log {
+          size 01M
+          rotate 5
+          compress
+          missingok
+          copytruncate
+        }
+
+  - name: Restart cloudwatch agent
+    become: true
+    command: >-
+      /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl
+      -a fetch-config
+      -m ec2
+      -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json
+      -s
+
+  - name: Test cloudwatch agent status
+    command: >-
+      /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl
+      -m ec2
+      -a status

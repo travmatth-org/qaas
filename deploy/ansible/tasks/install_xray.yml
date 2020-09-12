@@ -1,0 +1,16 @@
+---
+  - name: Install X-Ray daemon
+    yum:
+      name: https://s3.dualstack.us-east-2.amazonaws.com/aws-xray-assets.us-east-2/xray-daemon/aws-xray-daemon-3.x.rpm
+      state: present
+
+  - name: Enable X-Ray service
+    become: true
+    systemd:
+      name: xray
+      daemon_reload: true
+      enabled: true
+      state: restarted
+
+  - name: Test xray status
+    command: systemctl is-active --quiet xray

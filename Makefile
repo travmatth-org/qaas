@@ -13,9 +13,23 @@ default: build
 build: clean $(MAIN)
 	go build -o $(APPLICATION) $(MAIN)
 
-build.all: build
+build.linux: clean $(MAIN)
+	GOOS=linux GOARCH=amd64 go build -o $(APPLICATION) $(MAIN)
+
+build.ami: build.all
+	packer build deploy/packer/packer.json
+
+build.cicd:
+	@$(MAKE) plan.cicd -C deploy/terraform
+
+build.network:
+	@$(MAKE) plan.network -C deploy/terraform
+
+build.asg:
+	@$(MAKE) plan.asg -C deploy/terraform
+
+build.all: build.linux
 	zip -r dist/assets.zip web/
-	cp init/* dist
 	cp build/cicd/appspec.yml dist
 	cp scripts/codedeploy/* dist/
 
@@ -48,13 +62,16 @@ test: test.clean
 validate.sysd:
 	sudo systemd-analyze verify init/httpd.service
 
-cicd: lint vet test 
+cicd: lint vet test
 
 test.codebuild:
 	./vendor/codebuild_build.sh \
 		-i travmatth/amazonlinux-golang-dev \
 		-b build/cicd/buildspec.yml \
 		-a dist/codebuild
+
+validate.ansible:
+	@ansible-playbook deploy/ansible/playbook.yml --check;
 
 # generate, view test coverage
 
@@ -99,11 +116,14 @@ tf.ip:
 
 # misc
 
+asg.describe:
+	@aws autoscaling describe-auto-scaling-instances
+
 count.lines:
 	@git ls-files | xargs wc -l
 
-# makefile phony target 
-.PHONY: default build build.all run get clean \
+# makefile phony target
+.PHONY: default run get clean \
 	lint vet test.clean test check validate.sysd cicd \
 	test.codebuild coverage coverage.html coverage.view \
 	tf.init tf.plan tf.apply tf.destroy tf.destroy.ec2 \

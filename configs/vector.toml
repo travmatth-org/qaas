@@ -1,0 +1,13 @@
+[sources.in]
+  type = "journald"
+  include_units = ["httpd"]
+
+[sinks.out]
+  encoding.codec = "json"
+
+  # General
+  group_name = "faas-httpd-logs"
+  inputs = ["in"]
+  region = "us-west-1"
+  stream_name = "{{ host }}"
+  type = "aws_cloudwatch_logs"

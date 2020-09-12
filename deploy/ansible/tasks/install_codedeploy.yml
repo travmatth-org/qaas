@@ -1,0 +1,24 @@
+---
+  - name: Create codedeploy-install directory
+    file:
+      path: /tmp/codedeploy-install
+      state: directory
+
+  - name: Download codedeploy-agent daemon install script
+    get_url:
+      url: https://aws-codedeploy-us-west-1.s3.us-west-1.amazonaws.com/latest/install
+      dest: /tmp/codedeploy-install
+      mode: u=rwx
+
+  - name: Install CodeDeploy agent
+    shell: ./install auto
+    args:
+      chdir: /tmp/codedeploy-install
+
+  - name: Remove codedeploy-agent install script
+    file:
+      path: /tmp/codedeploy-install
+      state: absent
+
+  - name: Test codedeploy-agent status
+    command: systemctl is-active --quiet codedeploy-agent

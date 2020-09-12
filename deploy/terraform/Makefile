@@ -6,6 +6,24 @@ init:
 plan:
 	terraform plan -var-file=".tfvars" -out $(TF_PLAN);
 
+plan.cicd:
+	terraform plan -var-file=".tfvars" -out $(TF_PLAN) \
+		-target=module.tf_backend \
+		-target=module.cicd;
+
+plan.network:
+	terraform plan -var-file=".tfvars" -out $(TF_PLAN) \
+		-target=module.tf_backend \
+		-target=module.cicd \
+		-target=module.network;
+
+plan.asg:
+	terraform plan -var-file=".tfvars" -out $(TF_PLAN) \
+		-target=module.tf_backend \
+		-target=module.cicd \
+		-target=module.network \
+		-target=module.asg;
+
 apply:
 	terraform apply $(TF_PLAN);
 

@@ -1,0 +1,29 @@
+---
+  - name: Install Vector daemon
+    yum:
+      name: https://packages.timber.io/vector/0.10.X/vector-x86_64.rpm
+      state: present
+
+  - name: Copy Vector config to instance
+    copy:
+      src: ../../../configs/vector.toml
+      dest: /etc/vector/vector.toml
+      owner: vector
+      group: vector
+
+  - name: Add 'vector' user to group systemd-journal
+    user:
+      name: vector
+      groups: systemd-journal
+      append: yes
+
+  - name: Enable Vector service
+    become: true
+    systemd:
+      name: vector
+      daemon_reload: true
+      enabled: true
+      state: restarted
+
+  - name: Test codedeploy-agent status
+    command: systemctl is-active --quiet vector

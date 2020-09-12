@@ -1,0 +1,34 @@
+---
+- hosts: all
+  become: yes
+  remote_user: ec2_user
+  become_user: root
+  become_method: sudo
+  tasks:
+    - name: Upgrade all packages
+      yum:
+        name: "*"
+        state: latest
+
+    - name: Install Faas Server
+      include: tasks/install_faas.yml
+
+    - name: Install utils
+      yum:
+        name: "{{ packages }}"
+      vars:
+        packages:
+          - ruby
+          - shadow-utils.x86_64
+
+    - name: Install CloudWatch
+      include: tasks/install_cloudwatch.yml
+
+    - name: Install CodeDeploy
+      include: tasks/install_codedeploy.yml
+
+    - name: Install Vector
+      include: tasks/install_vector.yml
+
+    - name: Install X-Ray
+      include: tasks/install_xray.yml

@@ -3,7 +3,8 @@ variable "aws_account_id" {
 }
 
 resource "aws_s3_bucket" "tf_state_bucket" {
-  bucket = "faas-terraform-state-bucket-${var.aws_account_id}"
+  acl     = "private"
+  bucket  = "faas-terraform-state-bucket-${var.aws_account_id}"
 
   # lifecycle {
   #   prevent_destroy = true

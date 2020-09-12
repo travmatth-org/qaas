@@ -1,3 +1,6 @@
+variable "codepipeline_artifact_bucket" {}
+variable "user" {}
+
 data "aws_iam_policy_document" "assume_role" {
 	statement {
 		effect  = "Allow"
@@ -22,8 +25,6 @@ resource "aws_iam_role" "faas" {
 output "faas_iam_role" {
 	value = aws_iam_role.faas
 }
-
-variable "codepipeline_artifact_bucket" {}
 
 data "aws_iam_policy_document" "faas_cicd_policy" {
 	# allow agents to query for metadata
@@ -76,6 +77,26 @@ data "aws_iam_policy_document" "faas_cicd_policy" {
 		]
 		resources = ["*"]
 	}
+
+	# allow ssm to manage ssh to instances
+	statement {
+		effect	= "Allow"
+		actions	= [
+			"ssmmessages:CreateControlChannel",
+			"ssmmessages:CreateDataChannel",
+			"ssmmessages:OpenControlChannel",
+			"ssmmessages:OpenDataChannel"
+		]
+		resources = ["*"]
+	}
+
+	statement {
+		effect	= "Allow"
+		actions	= [
+			"s3:GetEncryptionConfiguration"
+		]
+		resources = ["*"]
+	}
 }
 
 resource "aws_iam_policy" "cicd" {
@@ -95,4 +116,46 @@ resource "aws_iam_instance_profile" "faas_service" {
   name = "faas_service"
   path = "/"
   role = aws_iam_role.faas.name
+}
+
+resource "aws_iam_group" "faas_ssh_group" {
+	name	= "faas-ssh-group"
+}
+
+resource "aws_iam_group_membership" "faas_ssh_group" {
+	name	= "ssh-group-members"
+	users	= [var.user]
+	group	= aws_iam_group.faas_ssh_group.id
+}
+
+data "aws_iam_policy_document" "ssh_policy" {
+	statement {
+		effect		= "Allow"
+		actions		= ["ec2-instance-connect:SendSSHPublicKey"]
+		resources	= ["arn:aws:ec2:us-west-1:${var.account_id}:instance/*"]
+		condition {
+			test		= "StringEquals"
+			variable	= "ec2:osuser"
+			values		= ["ec2-user"]
+		}
+		condition {
+			test		= "StringEquals"
+			variable	= "aws:ResourceTag/faas"
+			values		= ["service"]
+		}
+	}
+
+	# EC2 Instance Connect CLI wrapper calls this action
+	statement {
+		effect    = "Allow"
+		actions   = ["ec2:DescribeInstances"]
+		resources = ["*"]
+	}
+}
+
+resource "aws_iam_group_policy" "ssh_policy" {
+	name	= "faas_ssh-policy"
+	group	= aws_iam_group.faas_ssh_group.id
+
+	policy	= data.aws_iam_policy_document.ssh_policy.json
 }

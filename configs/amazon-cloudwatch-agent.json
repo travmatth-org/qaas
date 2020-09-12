@@ -1,0 +1,43 @@
+{
+   "agent": {
+      "metrics_collection_interval": 15
+   },
+   "metrics": {
+      "namespace": "Prod/Faas",
+      "metrics_collected": {
+         "cpu": {
+            "measurement": [
+               "usage_active",
+               "usage_iowait"
+            ]
+         },
+         "mem": {
+            "measurement": [
+               "used",
+               "total"
+            ]
+         },
+         "net": {
+            "measurement": [
+               "bytes_sent",
+               "bytes_recv"
+            ]
+         }
+      },
+      "append_dimensions": {
+         "ImageId": "${aws:ImageId}",
+         "InstanceId": "${aws:InstanceId}",
+         "InstanceType": "${aws:InstanceType}",
+         "AutoScalingGroupName": "${aws:AutoScalingGroupName}"
+      },
+      "aggregation_dimensions": [
+         [
+            "AutoScalingGroupName"
+         ],
+         [
+            "InstanceId",
+            "InstanceType"
+         ]
+      ]
+   }
+}
