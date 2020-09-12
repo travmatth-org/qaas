@@ -81,8 +81,8 @@ module "network" {
   source = "./modules/network"
 }
 
-module "asg" {
-  source                        = "./modules/asg"
+module "alb" {
+  source                        = "./modules/alb"
   vpc                           = module.network.vpc
   public_subnets                = module.network.public_subnets
   internet_gateway              = module.network.internet_gateway
@@ -91,6 +91,6 @@ module "asg" {
   user                          = basename(data.aws_caller_identity.current.arn)
 }
 
-output "asg_ip" {
-  value = module.asg.lb_dns_name
+output "alb_ip" {
+  value = module.alb.lb_dns_name
 }

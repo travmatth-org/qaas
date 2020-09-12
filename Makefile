@@ -30,8 +30,6 @@ build.asg:
 
 build.all: build.linux
 	zip -r dist/assets.zip web/
-	cp build/cicd/appspec.yml dist
-	cp scripts/codedeploy/* dist/
 
 run: build
 	./$(APPLICATION) --port $(TEST_PORT)
