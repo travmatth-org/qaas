@@ -40,7 +40,7 @@ RUN mkdir $HOME/workspace \
     #
     # Install tools for aws, go, dev
     && yum -y install \
-        zsh git openssh-client less iproute2 procps curl unzip \
+        zsh git openssh-client less iproute2 procps curl unzip jq \
         lsb-release zip aws-cli gzip tar git sudo gcc make wget xz \
     #
     # Create a non-root user to use if preferred - see https://aka.ms/vscode-remote/containers/non-root-user.
@@ -95,16 +95,19 @@ RUN mkdir $HOME/workspace \
     # Install golangci-lint
     && curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b /usr/local/bin 2>&1 \
     #
-    # Install terraform
-    && curl -sSfLOJ https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/${TERRAFORM_PACKAGE} \
-    && unzip $TERRAFORM_PACKAGE \
-    && rm ${TERRAFORM_PACKAGE} \
-    && mv terraform /usr/local/bin \
-    #
     # Install shellcheck
     && wget -c 'https://github.com/koalaman/shellcheck/releases/download/stable/shellcheck-stable.linux.x86_64.tar.xz' \
             --no-check-certificate -O - | tar -xvJ -C /tmp/ \
     && mv /tmp/shellcheck-stable/shellcheck /usr/bin/ \
+    #
+    # Install packer
+    # https://learn.hashicorp.com/tutorials/packer/getting-started-install
+    && sudo yum install -y yum-utils \
+    && sudo yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo \
+    && sudo yum -y install packer \
+    #
+    # Install Ansible
+    && sudo amazon-linux-extras install -y ansible2 \
     #
     # Clean up
     && yum autoremove -y \

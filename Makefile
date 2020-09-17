@@ -37,6 +37,14 @@ run: build
 get: $(MAIN)
 	go get -v -t -d ./...
 
+# manage codebuild dockerfile
+
+docker.build: deploy/docker/dev.dockerfile
+	@docker build -t travmatth/amazonlinux-golang-dev -f deploy/docker/dev.dockerfile .
+
+docker.push:
+	@docker push travmatth/amazonlinux-golang-dev:latest
+
 # cleaning, linting, checking and testing faas
 
 clean:
@@ -66,7 +74,8 @@ test.codebuild:
 	./vendor/codebuild_build.sh \
 		-i travmatth/amazonlinux-golang-dev \
 		-b build/cicd/buildspec.yml \
-		-a dist/codebuild
+		-a dist/codebuild \
+		-c
 
 validate.ansible:
 	@ansible-playbook deploy/ansible/playbook.yml --check;
