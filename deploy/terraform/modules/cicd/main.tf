@@ -1,5 +1,7 @@
 variable "codebuild_logging_bucket" {}
 variable "tf_state_bucket" {}
+variable "user_name" {}
+variable "account_id" {}
 variable "codepipeline_artifact_bucket" {}
 variable "dynamodb_lock_state_table" {}
 
@@ -8,6 +10,8 @@ module "codebuild" {
   codebuild_logging_bucket     = var.codebuild_logging_bucket
   codepipeline_artifact_bucket = var.codepipeline_artifact_bucket
   dynamodb_lock_state_table    = var.dynamodb_lock_state_table
+  user_name                    = var.user_name
+  account_id                   = var.account_id
 }
 
 module "codedeploy" {
@@ -25,8 +29,6 @@ variable "webhook_secret" {
 variable "github_oauth_token" {
   description = "GitHub OAuth token"
 }
-
-variable "account_id" {}
 
 module "codepipeline" {
   source                       = "./modules/codepipeline"

@@ -1,6 +1,10 @@
 variable "github_oauth_token" {}
 data "aws_caller_identity" "current" {}
 
+locals {
+  user_name = basename(data.aws_caller_identity.current.arn)
+}
+
 terraform {
   required_version = ">=0.12.28"
 
@@ -45,7 +49,7 @@ resource "aws_ssm_parameter" "github_oauth_token" {
   value       = var.github_oauth_token
 
   tags        = {
-    FaaS      = "true"
+    faas      = "true"
   }
 }
 
@@ -75,22 +79,23 @@ module "cicd" {
   dynamodb_lock_state_table    = module.tf_backend.dynamodb_lock_state_table
   github_repo                  = data.github_repository.faas
   account_id                   = data.aws_caller_identity.current.account_id
+  user_name                    = local.user_name
 }
 
 module "network" {
   source = "./modules/network"
 }
 
-module "alb" {
-  source                        = "./modules/alb"
-  vpc                           = module.network.vpc
-  public_subnets                = module.network.public_subnets
-  internet_gateway              = module.network.internet_gateway
-  codepipeline_artifact_bucket  = module.tf_backend.codepipeline_artifact_bucket
-  account_id                    = data.aws_caller_identity.current.account_id
-  user                          = basename(data.aws_caller_identity.current.arn)
-}
+# module "alb" {
+#   source                        = "./modules/alb"
+#   vpc                           = module.network.vpc
+#   public_subnets                = module.network.public_subnets
+#   internet_gateway              = module.network.internet_gateway
+#   codepipeline_artifact_bucket  = module.tf_backend.codepipeline_artifact_bucket
+#   account_id                    = data.aws_caller_identity.current.account_id
+#   user_name                     = local.user_name
+# }
 
-output "alb_ip" {
-  value = module.alb.lb_dns_name
-}
+# output "alb_ip" {
+#   value = module.alb.lb_dns_name
+# }

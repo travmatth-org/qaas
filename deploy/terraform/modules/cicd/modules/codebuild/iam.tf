@@ -28,18 +28,28 @@ data "aws_iam_policy_document" "codebuild_policy" {
 	}
 
 	statement {
-		effect  = "Allow"
-		actions	= [
+		sid			= "AllowCodeBuildLoggingAccess"
+		effect		= "Allow"
+		actions		= [
 			"logs:CreateLogGroup",
 			"logs:CreateLogStream",
 			"logs:PutLogEvents",
 		]
-		resources = ["*"]
+		resources	= ["*"]
+	}
+
+	statement {
+		sid			= "AllowCodeBuildSSMParameterAccess"
+		effect  	= "Allow"
+		actions		= ["ssm:GetParameters"]
+		resources	= [
+			"arn:aws:ssm:us-west-1:${var.account_id}:parameter/faas/packer_role_arn"
+		]
 	}
 }
 
 resource "aws_iam_policy" "codebuild_policy" {
-	name	= "CodeBuildIamPolicy"
+	name	= "codebuild-policy"
 	path	= "/service-role/"
 	policy	= data.aws_iam_policy_document.codebuild_policy.json
 }

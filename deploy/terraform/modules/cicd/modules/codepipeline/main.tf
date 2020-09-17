@@ -45,7 +45,7 @@ resource "aws_codepipeline" "codepipeline" {
       owner            = "AWS"
       provider         = "CodeBuild"
       input_artifacts  = ["source_artifact"]
-      output_artifacts = ["build_artifact"]
+      output_artifacts = ["build_log"]
       version          = "1"
 
       configuration = {
@@ -71,15 +71,18 @@ resource "aws_codepipeline" "codepipeline" {
     name = "Deploy"
 
     action {
-      name            = "Deploy"
-      category        = "Deploy"
-      owner           = "AWS"
-      provider        = "CodeDeploy"
-      version         = "1"
-      input_artifacts = ["build_artifact"]
-      configuration = {
-        ApplicationName     = var.codedeploy.app.name
-        DeploymentGroupName = var.codedeploy.deployment_group.deployment_group_name
+      name             = "Deploy"
+      category         = "Deploy"
+      owner            = "AWS"
+      provider         = "S3"
+      version          = "1"
+      input_artifacts  = ["build_log"]
+      output_artifacts = []
+      configuration    = {
+        BucketName     = var.codepipeline_artifact_bucket.bucket
+        Extract        = true
+        CannedACL      = "private"
+        ObjectKey     = "packer/logs/build-{datetime}.log"
       }
     }
   }

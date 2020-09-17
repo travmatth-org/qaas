@@ -1,17 +1,43 @@
-version: 0.1
+version: 0.2
+
+env:
+  parameter-store:
+    ROLE_ARN: "/faas/packer_role_arn"
 
 phases:
   install:
     commands:
       - make get
+
   pre_build:
     commands:
+      - echo "Validating deploy/packer/packer.json"
+      - /usr/bin/packer validate deploy/packer/packer.json
+      - echo "Testing httpd server"
       - make cicd
+
   build:
     commands:
+      - echo "Building httpd server"
       - make build.all
+      ### HashiCorp Packer cannot currently obtain the AWS CodeBuild-assigned role and its credentials
+      ### Manually capture and configure the AWS CLI to provide HashiCorp Packer with AWS credentials
+      ### More info here: https://github.com/mitchellh/packer/issues/4279
+      - echo "Configuring AWS credentials"
+      - bash scripts/codebuild/get_aws_creds.sh ${ROLE_ARN}
+      - echo "Building HashiCorp Packer ami"
+      - /usr/bin/packer build -color=false deploy/packer/packer.json | tee build.log
+
+  post_build:
+    commands:
+      # look up AMI ID created by packer, save to ami_id.txt
+      - egrep "${AWS_REGION}\:\sami\-" build.log | cut -d' ' -f2 > ami_id.txt
+      - cat build.log ami_id.txt 
+      # Packer doesn't return non-zero status; we must do that if Packer build failed
+      - test -s ami_id.txt || exit 1
 
 artifacts:
   files:
-    - dist/*
+    - build.log
+  name: build_log
   discard-paths: yes

@@ -32,13 +32,22 @@
 		},
 		"instance_type": "t2.micro",
 		"ssh_username": "ec2-user",
-		"ami_name": "faas-http-{{timestamp}}"
+		"ami_name": "faas-http-{{timestamp}}",
+		"ami_description": "FaaS HTTP Server AMI",
+		"associate_public_ip_address": "true"
 	  }
 	],
 	"provisioners": [
 		{
 			"type": "ansible",
+			"user": "ec2-user",
 			"playbook_file": "deploy/ansible/playbook.yml"
+		},
+		{
+			"type": "shell",
+			"inline": [
+				"rm .ssh/authorized_keys ; sudo rm /root/.ssh/authorized_keys"
+			]
 		}
 	]
 }
