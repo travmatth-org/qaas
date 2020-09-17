@@ -11,7 +11,7 @@ resource "aws_security_group" "http_in" {
 	}
 
 	tags = {
-		FaaS = "true"
+		faas = "true"
 	}
 }
 
@@ -28,7 +28,7 @@ resource "aws_security_group" "http_out" {
 	}
 
 	tags = {
-		FaaS = "true"
+		faas = "true"
 	}
 }
 
@@ -45,7 +45,7 @@ resource "aws_security_group" "ssh_in" {
 	}
 
 	tags = {
-		FaaS = "true"
+		faas = "true"
 	}
 }
 
@@ -62,7 +62,7 @@ resource "aws_security_group" "ephemeral_out" {
 	}
 
 	tags = {
-		FaaS = "true"
+		faas = "true"
 	}
 }
 
@@ -80,6 +80,6 @@ resource "aws_security_group" "https_out" {
 	}
 
 	tags = {
-		FaaS = "true"
+		faas = "true"
 	}
 }

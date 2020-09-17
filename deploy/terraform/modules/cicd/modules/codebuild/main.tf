@@ -1,9 +1,11 @@
+variable "account_id" {}
 variable "codebuild_logging_bucket" {}
 variable "codepipeline_artifact_bucket" {}
 variable "dynamodb_lock_state_table" {}
+variable "user_name" {}
 
 resource "aws_codebuild_project" "faas_project" {
-  name          = "FaaSCodeBuildProject"
+  name          = "faasCodeBuildProject"
   description   = "Terraform codebuild project"
   build_timeout = "5"
   service_role  = aws_iam_role.codebuild_role.arn
@@ -32,7 +34,7 @@ resource "aws_codebuild_project" "faas_project" {
   logs_config {
     s3_logs {
       status   = "ENABLED"
-      location = "${var.codebuild_logging_bucket.id}/FaaSCodeBuildProject/build-log"
+      location = "${var.codebuild_logging_bucket.id}/faasCodeBuildProject/build-log"
     }
   }
 
@@ -42,9 +44,9 @@ resource "aws_codebuild_project" "faas_project" {
   }
 
   tags = {
-    Terraform = "true"
-    FaaS      = "true"
-    CodeBuild = "true"
+    terraform = "true"
+    faas      = "true"
+    codebuild = "true"
   }
 }
 

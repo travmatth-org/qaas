@@ -109,22 +109,10 @@ tf.all:
 tf.destroy:
 	@$(MAKE) destroy -C deploy/terraform
 
-tf.destroy.ec2:
-	@$(MAKE) destroy.ec2 -C deploy/terraform
-
-tf.destroy.cicd:
-	@$(MAKE) destroy.cicd -C deploy/terraform
-
 tf.show:
 	@$(MAKE) show -C deploy/terraform
 
-tf.ip:
-	@$(MAKE) ip -C deploy/terraform
-
 # misc
-
-asg.describe:
-	@aws autoscaling describe-auto-scaling-instances
 
 count.lines:
 	@git ls-files | xargs wc -l

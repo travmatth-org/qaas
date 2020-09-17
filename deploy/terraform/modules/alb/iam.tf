@@ -27,8 +27,8 @@ output "faas_iam_role" {
 }
 
 data "aws_iam_policy_document" "faas_cicd_policy" {
-	# allow agents to query for metadata
 	statement {
+		sid		= "AllowAgentMetadataQueries"
 		effect	= "Allow"
 		actions = [
 			"ec2:DescribeTags"
@@ -36,13 +36,12 @@ data "aws_iam_policy_document" "faas_cicd_policy" {
 		resources = ["*"]
 	}
 
-	# allow codedeploy deployments 
 	statement {
+		sid		= "AllowCodeDeployDeploymnets"
 		effect	= "Allow"
 		actions	= [
 			"s3:Get*",
 			"s3:List*",
-			"s3:GetEncryptionConfiguration"
 		]
 		resources = [
 			"${var.codepipeline_artifact_bucket.arn}/*",
@@ -50,9 +49,9 @@ data "aws_iam_policy_document" "faas_cicd_policy" {
 		]
 	}
 	
-	# allow cloudwatch-agent to collect and send logs, metrics
 	# https://github.com/SummitRoute/aws_managed_policies/blob/master/policies/CloudWatchAgentServerPolicy
 	statement {
+		sid		= "AllowCloudWatchLogging"
 		effect  = "Allow"
 		actions = [
 			"cloudwatch:PutMetricData",
@@ -64,9 +63,9 @@ data "aws_iam_policy_document" "faas_cicd_policy" {
 		resources = ["*"]
 	}
 
-	# allow x-ray to send traces
 	# https://docs.aws.amazon.com/xray/latest/devguide/security_iam_id-based-policy-examples.html
 	statement {
+		sid		= "AllowXRayTraces"
 		effect  = "Allow"
 		actions = [
 			"xray:PutTraceSegments",
@@ -80,20 +79,13 @@ data "aws_iam_policy_document" "faas_cicd_policy" {
 
 	# allow ssm to manage ssh to instances
 	statement {
+		sid		= "AllowSSMSSHAccess"
 		effect	= "Allow"
 		actions	= [
 			"ssmmessages:CreateControlChannel",
 			"ssmmessages:CreateDataChannel",
 			"ssmmessages:OpenControlChannel",
 			"ssmmessages:OpenDataChannel"
-		]
-		resources = ["*"]
-	}
-
-	statement {
-		effect	= "Allow"
-		actions	= [
-			"s3:GetEncryptionConfiguration"
 		]
 		resources = ["*"]
 	}
@@ -130,6 +122,7 @@ resource "aws_iam_group_membership" "faas_ssh_group" {
 
 data "aws_iam_policy_document" "ssh_policy" {
 	statement {
+		sid			= "AllowUserSSHAccessFaasInstance"
 		effect		= "Allow"
 		actions		= ["ec2-instance-connect:SendSSHPublicKey"]
 		resources	= ["arn:aws:ec2:us-west-1:${var.account_id}:instance/*"]

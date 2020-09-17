@@ -56,7 +56,7 @@ resource "aws_ssm_parameter" "webhook_secret" {
   value       = random_password.github_secret.result
 
   tags        = {
-    FaaS      = "true"
+    faas      = "true"
   }
 }
 

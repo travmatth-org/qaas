@@ -10,12 +10,13 @@ data "aws_iam_policy_document" "codebuild_role_policy" {
 }
 
 resource "aws_iam_role" "codebuild_role" {
-	name				= "FaaSCoddeBuildIamRole"
+	name				= "faasCoddeBuildIamRole"
 	assume_role_policy	= data.aws_iam_policy_document.codebuild_role_policy.json
 }
 
 data "aws_iam_policy_document" "codebuild_policy" {
 	statement {
+		sid			= "AllowCodeBuildS3Control"
 		effect		= "Allow"
 		actions		= ["s3:*"]
 		resources	= [

@@ -24,7 +24,7 @@ resource "aws_s3_bucket" "tf_state_bucket" {
 
   tags = {
     Terraform = "true"
-		FaaS = "true"
+		faas = "true"
   }
 }
 
@@ -95,7 +95,7 @@ resource "aws_dynamodb_table" "terraform_lock_state_dynamodb" {
 
   tags = {
     Terraform = "true"
-    FaaS      = "true"
+    faas      = "true"
   }
 }
 

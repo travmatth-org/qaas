@@ -8,7 +8,7 @@ variable "webhook_secret" {}
 variable "github_oauth_token" {}
 
 resource "aws_codepipeline" "codepipeline" {
-  name     = "FaaSCodePipeline"
+  name     = "faasCodePipeline"
   role_arn = aws_iam_role.codepipeline_role.arn
 
   artifact_store {
@@ -105,12 +105,12 @@ resource "aws_codepipeline_webhook" "faas" {
 	}
 
   tags = {
-    FaaS = "true"
+    faas = "true"
   }
 }
 
 resource "github_repository_webhook" "faas" {
-repository = var.github_repo.name
+  repository = var.github_repo.name
   events = ["push"]
 
   configuration {

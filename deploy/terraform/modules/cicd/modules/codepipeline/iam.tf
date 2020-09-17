@@ -14,7 +14,7 @@ resource "aws_iam_role" "codepipeline_role" {
   assume_role_policy = data.aws_iam_policy_document.codepipeline_role_policy.json
 
   tags               = {
-    FaaS = "true"
+    faas = "true"
   }
 }
 
