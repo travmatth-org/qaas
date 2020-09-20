@@ -8,16 +8,20 @@ set -eux pipefail
 role_session_name='packer-ami-creator'
 
 temp_role=$(aws sts assume-role \
-     --role-arn $role_arn \
-     --role-session-name $role_session_name \
+     --role-arn "$role_arn" \
+     --role-session-name "$role_session_name" \
      --output json)
 
-export AWS_ACCESS_KEY_ID=$(echo $temp_role | jq -r .Credentials.AccessKeyId)
-export AWS_SECRET_ACCESS_KEY=$(echo $temp_role | jq -r .Credentials.SecretAccessKey)
-export AWS_SESSION_TOKEN=$(echo $temp_role | jq -r .Credentials.SessionToken)
-export AWS_DEFAULT_REGION=us-west-1
+AWS_ACCESS_KEY_ID="$(echo "$temp_role" | jq -r .Credentials.AccessKeyId)"
+AWS_SECRET_ACCESS_KEY="$(echo "$temp_role" | jq -r .Credentials.SecretAccessKey)"
+AWS_SESSION_TOKEN="$(echo "$temp_role" | jq -r .Credentials.SessionToken)"
 
-aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
-aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
-aws configure set aws_session_token $AWS_SESSION_TOKEN
-aws configure set region $AWS_DEFAULT_REGION
+export AWS_DEFAULT_REGION=us-west-1
+export AWS_ACCESS_KEY_ID
+export AWS_SECRET_ACCESS_KEY
+export AWS_SESSION_TOKEN
+
+aws configure set aws_access_key_id "$AWS_ACCESS_KEY_ID"
+aws configure set aws_secret_access_key "$AWS_SECRET_ACCESS_KEY"
+aws configure set aws_session_token "$AWS_SESSION_TOKEN"
+aws configure set region "$AWS_DEFAULT_REGION"
