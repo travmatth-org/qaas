@@ -1,12 +1,12 @@
 # make vars
 
 APPLICATION		:= dist/httpd
-MAIN			:= cmd/faas/main.go
+MAIN			:= cmd/qaas/main.go
 TEST_PORT		:= ":8080"
 COVERAGE_OUT	:= coverage.out
 COVERAGE_HTML	:= coverage.html
 
-# runnnig faas for dev and compiling for production
+# runnnig qaas for dev and compiling for production
 
 default: build
 
@@ -45,7 +45,7 @@ docker.build: deploy/docker/dev.dockerfile
 docker.push:
 	@docker push travmatth/amazonlinux-golang-dev:latest
 
-# cleaning, linting, checking and testing faas
+# cleaning, linting, checking and testing qaas
 
 clean:
 	rm -rf dist
@@ -54,7 +54,7 @@ clean:
 
 lint:
 	golint -set_exit_status ./...
-	# shellcheck $(shell find . -type f -name "*.sh" -not -path "*vendor*")
+	shellcheck $(shell find . -type f -name "*.sh" -not -path "*vendor*")
 
 vet:
 	go vet $(MAIN)
@@ -68,7 +68,7 @@ test: test.clean
 validate.sysd:
 	sudo systemd-analyze verify init/httpd.service
 
-cicd: lint vet test
+cicd: tf.check lint vet test
 
 test.codebuild:
 	./vendor/codebuild_build.sh \
@@ -111,6 +111,12 @@ tf.destroy:
 
 tf.show:
 	@$(MAKE) show -C deploy/terraform
+
+tf.check:
+	@terraform fmt -recursive -check deploy/terraform
+
+tf.fmt:
+	@terraform fmt -recursive deploy/terraform
 
 # misc
 

@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/Travmatth/faas/internal/logger"
+	"github.com/Travmatth/qaas/internal/logger"
 	"github.com/coreos/go-systemd/daemon"
 )
 
@@ -20,7 +20,7 @@ const (
 	defaultLivenessCheckInterval = 10
 	index                        = "index.html"
 	notFound                     = "404.html"
-	name                         = "faas"
+	name                         = "qaas"
 )
 
 // Config manages the configuration options of the program.

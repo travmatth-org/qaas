@@ -3,7 +3,7 @@ package confighelpers
 import (
 	"bytes"
 
-	"github.com/Travmatth/faas/internal/logger"
+	"github.com/Travmatth/qaas/internal/logger"
 )
 
 // ResetLogger instantiates a new buffer with a

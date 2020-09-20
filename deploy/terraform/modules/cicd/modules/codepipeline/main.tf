@@ -8,7 +8,7 @@ variable "webhook_secret" {}
 variable "github_oauth_token" {}
 
 resource "aws_codepipeline" "codepipeline" {
-  name     = "faasCodePipeline"
+  name     = "qaas-codepipeline"
   role_arn = aws_iam_role.codepipeline_role.arn
 
   artifact_store {
@@ -26,12 +26,12 @@ resource "aws_codepipeline" "codepipeline" {
       provider         = "GitHub"
       version          = "1"
       output_artifacts = ["source_artifact"]
-      configuration    = {
-        Owner                 = "travmatth-org"
-        Repo                  = var.github_repo.name
-        Branch                = "master"
-        OAuthToken            = var.github_oauth_token
-        PollForSourceChanges  = false
+      configuration = {
+        Owner                = "travmatth-org"
+        Repo                 = var.github_repo.name
+        Branch               = "master"
+        OAuthToken           = var.github_oauth_token
+        PollForSourceChanges = false
       }
     }
   }
@@ -78,46 +78,46 @@ resource "aws_codepipeline" "codepipeline" {
       version          = "1"
       input_artifacts  = ["build_log"]
       output_artifacts = []
-      configuration    = {
-        BucketName     = var.codepipeline_artifact_bucket.bucket
-        Extract        = true
-        CannedACL      = "private"
-        ObjectKey     = "packer/logs/build-{datetime}.log"
+      configuration = {
+        BucketName = var.codepipeline_artifact_bucket.bucket
+        Extract    = true
+        CannedACL  = "private"
+        ObjectKey  = "packer/logs/build-{datetime}.log"
       }
     }
   }
 }
 
 output "codepipeline" {
-	value = aws_codepipeline.codepipeline
+  value = aws_codepipeline.codepipeline
 }
 
-resource "aws_codepipeline_webhook" "faas" {
-	name            = "faas-codepipeline-webhook"
-	authentication  = "GITHUB_HMAC"
-	target_action   = "Source"
-	target_pipeline = aws_codepipeline.codepipeline.name
+resource "aws_codepipeline_webhook" "qaas" {
+  name            = "qaas-codepipeline-webhook"
+  authentication  = "GITHUB_HMAC"
+  target_action   = "Source"
+  target_pipeline = aws_codepipeline.codepipeline.name
 
-	authentication_configuration {
-		secret_token = var.webhook_secret
-	}
+  authentication_configuration {
+    secret_token = var.webhook_secret
+  }
 
-	filter {
-		json_path     = "$.ref"
-		match_equals  = "refs/heads/{Branch}"
-	}
+  filter {
+    json_path    = "$.ref"
+    match_equals = "refs/heads/{Branch}"
+  }
 
   tags = {
-    faas = "true"
+    qaas = "true"
   }
 }
 
-resource "github_repository_webhook" "faas" {
+resource "github_repository_webhook" "qaas" {
   repository = var.github_repo.name
-  events = ["push"]
+  events     = ["push"]
 
   configuration {
-    url          = aws_codepipeline_webhook.faas.url
+    url          = aws_codepipeline_webhook.qaas.url
     content_type = "json"
     insecure_ssl = true
     secret       = var.webhook_secret

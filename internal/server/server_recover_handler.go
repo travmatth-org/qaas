@@ -3,7 +3,7 @@ package server
 import (
 	"net/http"
 
-	"github.com/Travmatth/faas/internal/logger"
+	"github.com/Travmatth/qaas/internal/logger"
 )
 
 // RecoverHandler catches panics in downstream handlers,

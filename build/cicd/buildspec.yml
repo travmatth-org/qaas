@@ -2,7 +2,7 @@ version: 0.2
 
 env:
   parameter-store:
-    ROLE_ARN: "/faas/packer_role_arn"
+    ROLE_ARN: "/qaas/packer-role-arn"
 
 phases:
   install:

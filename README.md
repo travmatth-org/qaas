@@ -1,17 +1,17 @@
-# Fortunes As A Service (FAAS)
+# Quotes As A Service (qaas)
 
-A ridiculously overengineered cloud native application, managing all of your fortune-telling needs.
+A ridiculously overengineered cloud native application, managing all of your quote needs.
 
 ## Development
 
 The project is managed inside of a Docker container. If you're using VSCode, as I am, you'll be able to remotely connect to this container automatically, otherwise you're able to build a container with an image based on `.dev/container/Dockerfile`. There are several development related commands available in the Makefile:
 
 ```
-# compile the `faas` executable
+# compile the `qaas` executable
 make build
-# compile the `faas` executable and move all website assets into /dist folder for deployment 
+# compile the `qaas` executable and move all website assets into /dist folder for deployment 
 make build.all
-# compile & run `faas` with development options, for local testing over localhost:8080
+# compile & run `qaas` with development options, for local testing over localhost:8080
 make run
 # remove the compiled binary and associated cache files
 make clean

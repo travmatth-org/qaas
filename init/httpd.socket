@@ -1,5 +1,5 @@
 [Unit]
-Description=Faas HTTP Socket
+Description=qaas HTTP Socket
 
 [Socket]
 ListenStream=80

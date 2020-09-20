@@ -5,7 +5,7 @@
 role_arn="$1"
 set -eux pipefail
 
-role_session_name='packer'
+role_session_name='packer-ami-creator'
 
 temp_role=$(aws sts assume-role \
      --role-arn $role_arn \

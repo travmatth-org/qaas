@@ -5,8 +5,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/Travmatth/faas/internal/config"
-	confighelpers "github.com/Travmatth/faas/test/utils/config"
+	"github.com/Travmatth/qaas/internal/config"
+	confighelpers "github.com/Travmatth/qaas/test/utils/config"
 )
 
 func TestServer_RecoverHandler(t *testing.T) {

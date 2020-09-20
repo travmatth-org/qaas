@@ -27,7 +27,7 @@ var cnv = func(i int) time.Duration { return time.Second * time.Duration(i) }
 
 func TestConfig(t *testing.T) {
 	old := os.Args
-	os.Args = []string{"faas"}
+	os.Args = []string{"qaas"}
 	defer func() { os.Args = old }()
 	cwd, _ := os.Getwd()
 	cwd = filepath.Join(cwd, "web", "www", "static")

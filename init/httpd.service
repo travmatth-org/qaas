@@ -1,14 +1,14 @@
 [Unit]
 Description = Fortunes As A Service HTTP Server
-Documentation=https://www.github.com/Travmatth-org/faas
+Documentation=https://www.github.com/Travmatth-org/qaas
 ConditionPathExists=/usr/sbin/httpd
 After=network.target
 Requires=httpd.socket
 
 [Service]
 Type=notify
-User=faas
-Group=faas
+User=qaas
+Group=qaas
 
 Restart=on-failure
 RestartSec=10
@@ -23,7 +23,7 @@ PermissionsStartOnly=true
 # Logging details
 StandardOutput=journal
 StandardError=journal
-SyslogIdentifier=faas
+SyslogIdentifier=qaas
 
 # golang sets O_NONBLOCK on sockets it opens
 # we want to imitate that behavior

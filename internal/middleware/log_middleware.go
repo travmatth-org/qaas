@@ -3,7 +3,7 @@ package middleware
 import (
 	"net/http"
 
-	"github.com/Travmatth/faas/internal/logger"
+	"github.com/Travmatth/qaas/internal/logger"
 )
 
 // Log documents incoming requests before passing to child handler

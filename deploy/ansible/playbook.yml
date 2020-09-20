@@ -10,8 +10,8 @@
         name: "*"
         state: latest
 
-    - name: Install Faas Server
-      include: tasks/install_faas.yml
+    - name: Install qaas Server
+      include: tasks/install_qaas.yml
 
     - name: Install utils
       yum:

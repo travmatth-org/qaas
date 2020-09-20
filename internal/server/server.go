@@ -12,9 +12,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Travmatth/faas/internal/config"
-	"github.com/Travmatth/faas/internal/logger"
-	"github.com/Travmatth/faas/internal/middleware"
+	"github.com/Travmatth/qaas/internal/config"
+	"github.com/Travmatth/qaas/internal/logger"
+	"github.com/Travmatth/qaas/internal/middleware"
 	"github.com/aws/aws-xray-sdk-go/xray"
 	"github.com/coreos/go-systemd/daemon"
 	"github.com/coreos/go-systemd/v22/activation"
@@ -70,7 +70,7 @@ func New(c *config.Config) *Server {
 func (s *Server) WrapRoute(h http.HandlerFunc) http.HandlerFunc {
 	gzippedHandler := gziphandler.GzipHandler(h).ServeHTTP
 	return xray.Handler(
-		xray.NewFixedSegmentNamer("faas-httpd"),
+		xray.NewFixedSegmentNamer("qaas-httpd"),
 		alice.New(
 			s.RecoverHandler,
 			hlog.NewHandler(*logger.GetLogger()),

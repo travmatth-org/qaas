@@ -3,9 +3,9 @@ package main
 import (
 	"os"
 
-	"github.com/Travmatth/faas/internal/config"
-	"github.com/Travmatth/faas/internal/logger"
-	"github.com/Travmatth/faas/internal/server"
+	"github.com/Travmatth/qaas/internal/config"
+	"github.com/Travmatth/qaas/internal/logger"
+	"github.com/Travmatth/qaas/internal/server"
 
 	"github.com/aws/aws-xray-sdk-go/awsplugins/ec2"
 	"github.com/aws/aws-xray-sdk-go/xray"

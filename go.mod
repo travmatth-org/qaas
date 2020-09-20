@@ -1,4 +1,4 @@
-module github.com/Travmatth/faas
+module github.com/Travmatth/qaas
 
 go 1.12
 

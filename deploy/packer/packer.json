@@ -12,7 +12,7 @@
 		"region": "us-west-1",
 		"vpc_filter": {
 			"filters": {
-				"tag:faas": "vpc",
+				"tag:qaas": "vpc",
 				"tag:public": "true"
 			}
 		},
@@ -32,8 +32,8 @@
 		},
 		"instance_type": "t2.micro",
 		"ssh_username": "ec2-user",
-		"ami_name": "faas-http-{{timestamp}}",
-		"ami_description": "FaaS HTTP Server AMI",
+		"ami_name": "qaas-http-{{timestamp}}",
+		"ami_description": "qaas HTTP Server AMI",
 		"associate_public_ip_address": "true"
 	  }
 	],

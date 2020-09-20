@@ -33,7 +33,7 @@ func GetLogger() *zerolog.Logger {
 	base := zerolog.New(destination).With().
 		Timestamp().
 		Caller().
-		Str("role", "faas").
+		Str("role", "qaas").
 		Logger()
 	SetLogger(&base)
 	return instance

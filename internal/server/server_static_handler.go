@@ -3,7 +3,7 @@ package server
 import (
 	"net/http"
 
-	"github.com/Travmatth/faas/internal/logger"
+	"github.com/Travmatth/qaas/internal/logger"
 )
 
 // ServeStatic prepares and returns a http.Handler serving a single file

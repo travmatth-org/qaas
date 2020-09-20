@@ -1,9 +1,9 @@
 ---
-  - name: Add user "faas"
+  - name: Add user "qaas"
     user:
-      name: faas
+      name: qaas
       shell: /sbin/nologin
-      comment: "faas nologin User"
+      comment: "qaas nologin User"
       state: present
     become: yes
 

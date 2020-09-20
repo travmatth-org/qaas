@@ -6,7 +6,7 @@
   encoding.codec = "json"
 
   # General
-  group_name = "faas-httpd-logs"
+  group_name = "qaas-httpd-logs"
   inputs = ["in"]
   region = "us-west-1"
   stream_name = "{{ host }}"
