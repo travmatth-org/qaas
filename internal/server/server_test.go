@@ -14,9 +14,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Travmatth/qaas/internal/config"
-	"github.com/Travmatth/qaas/internal/logger"
-	confighelpers "github.com/Travmatth/qaas/test/utils/config"
+	"github.com/travmatth-org/qaas/internal/config"
+	"github.com/travmatth-org/qaas/internal/logger"
+	confighelpers "github.com/travmatth-org/qaas/test/utils/config"
 	"github.com/coreos/go-systemd/v22/daemon"
 )
 

@@ -76,7 +76,7 @@ module "tf_backend" {
 #   codebuild_logging_bucket     = module.tf_backend.codebuild_logging_bucket
 #   tf_state_bucket              = module.tf_backend.tf_state_bucket
 #   codepipeline_artifact_bucket = module.tf_backend.codepipeline_artifact_bucket
-#   dynamodb_lock_state_table    = module.tf_backend.dynamodb_lock_state_table
+#   dynamodb_lock_state_table    = module.tf_backend.client_lock_state_table
 #   github_repo                  = data.github_repository.qaas
 #   account_id                   = data.aws_caller_identity.current.account_id
 #   user_name                    = local.user_name

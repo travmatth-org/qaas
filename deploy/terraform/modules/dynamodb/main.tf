@@ -3,10 +3,10 @@ resource "aws_dynamodb_table" "qaas_quote_table" {
   billing_mode   = "PAY_PER_REQUEST"
   read_capacity  = 1
   write_capacity = 1
-  hash_key       = "Id"
+  hash_key       = "ID"
 
   attribute {
-    name = "Id"
+    name = "ID"
     type = "S"
   }
 
@@ -27,6 +27,18 @@ resource "aws_dynamodb_table" "qaas_author_table" {
     type = "S"
   }
 
+  attribute {
+    name = "QuoteID"
+    type = "S"
+  }
+
+  global_secondary_index {
+    name = "QuoteIDIndex"
+    hash_key = "Name"
+    sort_key = "QuoteID"
+    projection_type = "ALL"
+  }
+
   tags = {
     qaas = "dynamodb"
   }
@@ -42,6 +54,18 @@ resource "aws_dynamodb_table" "qaas_topics_table" {
   attribute {
     name = "Topic"
     type = "S"
+  }
+
+  attribute {
+    name = "QuoteID"
+    type = "S"
+  }
+
+  global_secondary_index {
+    name = "QuoteIDIndex"
+    hash_key = "Name"
+    sort_key = "QuoteID"
+    projection_type = "ALL"
   }
 
   tags = {
