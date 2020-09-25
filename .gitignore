@@ -38,3 +38,6 @@ dist/**/*
 **/*.key
 **/*.pub
 **/*.pem
+
+# vendor attrs
+vendor/**/*

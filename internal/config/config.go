@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/travmatth-org/qaas/internal/logger"
 	"github.com/coreos/go-systemd/daemon"
+	"github.com/travmatth-org/qaas/internal/logger"
 )
 
 const (
@@ -23,21 +23,29 @@ const (
 	name                         = "qaas"
 	defaultRegion                = "us-west-1"
 	devDbEndpoint                = "http://localhost:8000"
+	defaultPagination            = 5
+	defaultQuoteTable            = "qaas-quote-table"
+	defaultAuthorTable           = "qaas-author-table"
+	defaultTopicTable            = "qaas-topic-table"
 )
 
 // Config manages the configuration options of the program.
 // All members are unexported, accessed solely through member methods
 type Config struct {
-	Static       string
-	IP           string
-	Port         string
-	ReadTimeout  int
-	WriteTimeout int
-	StopTimeout  int
-	IdleTimeout  int
-	Prod         bool
-	Region       string
-	DbEndpoint   string
+	Static          string
+	IP              string
+	Port            string
+	ReadTimeout     int
+	WriteTimeout    int
+	StopTimeout     int
+	IdleTimeout     int
+	Prod            bool
+	Region          string
+	DBEndpoint      string
+	PaginationLimit int64
+	QuoteTable      string
+	AuthorTable     string
+	TopicTable      string
 }
 
 // New construct and returns a config with default values,
@@ -45,14 +53,20 @@ type Config struct {
 // Build() will overwrite with cwd
 func New() *Config {
 	return &Config{
-		Static:       filepath.Join("web", "www", "static"),
-		IP:           defaultIP,
-		Port:         defaultPort,
-		ReadTimeout:  defaultReadTimeout,
-		WriteTimeout: defaultWriteTimeout,
-		StopTimeout:  defaultStopTimeout,
-		IdleTimeout:  defaultIdleTimeout,
-		Prod:         false,
+		Static:          filepath.Join("web", "www", "static"),
+		IP:              defaultIP,
+		Port:            defaultPort,
+		ReadTimeout:     defaultReadTimeout,
+		WriteTimeout:    defaultWriteTimeout,
+		StopTimeout:     defaultStopTimeout,
+		IdleTimeout:     defaultIdleTimeout,
+		Prod:            false,
+		Region:          defaultRegion,
+		DBEndpoint:      devDbEndpoint,
+		PaginationLimit: defaultPagination,
+		QuoteTable:      defaultQuoteTable,
+		AuthorTable:     defaultAuthorTable,
+		TopicTable:      defaultTopicTable,
 	}
 }
 
@@ -82,12 +96,15 @@ func Build() *Config {
 	region := flag.String("region", defaultRegion, message)
 	message = "Set endpoint for dynamodb service"
 	endpoint := flag.String("endpoint", devDbEndpoint, message)
+	message = "Set limit for dynamodb service pagination"
+	paginationLimit := flag.Int64("paginationLimit", defaultPagination, message)
 
 	flag.Parse()
 
 	return &Config{
 		cwd, *ip, *port, *readTimeout, *writeTimeout,
-		*stopTimeout, *idleTimeout, *prod, region, endpoint
+		*stopTimeout, *idleTimeout, *prod, *region, *endpoint, *paginationLimit,
+		defaultQuoteTable, defaultAuthorTable, defaultTopicTable,
 	}
 }
 
@@ -146,9 +163,9 @@ func (c Config) GetAWSRegion() string {
 }
 
 func (c Config) GetDBEndpoint() string {
-	return c.Endpoint
+	return c.DBEndpoint
 }
 
-func (c Config) GetDBArn() string {
+func (c Config) GetDBRoleARN() string {
 	return ""
 }

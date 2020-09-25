@@ -3,14 +3,22 @@ package db
 import (
 	"math/rand"
 
-	"github.com/Travmatth-org/qaas/internal/types"
-	"github.com/aws/aws-sdk-go/aws"
+	"github.com/travmatth-org/qaas/internal/types"
+	// "github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
-    "github.com/aws/aws-sdk-go/service/dynamodb" 
 )
 
-func (d *DynamoDBClient) getPutItemInput(table *string, m interface{}, av *types.AWSAttrVal) (*types.AWSGetItemInput, error) {
+// func (d *DynamoDBClient) getPutItemInput(table *string, av types.AWSAttrVal, cond types.AWSConditionBuilder) (*types.AWSGetItemInput, error) {
+// }
+
+func (d *DynamoDBClient) PutItem(m interface{}, table string) error {
+	av, err := dynamodbattribute.MarshalMap(m)
+	// TODO delete after verify
+	if err != nil {
+		return err
+	}
 	var cond types.AWSConditionBuilder
 	switch m.(type) {
 	case types.Quote:
@@ -23,39 +31,27 @@ func (d *DynamoDBClient) getPutItemInput(table *string, m interface{}, av *types
 	expr, err := expression.NewBuilder().WithCondition(cond).Build()
 	// TODO delete after verify
 	if err != nil {
-		return nil, err
-	}
-	return (&dynamodb.GetItemInput{}).
-		SetItem(av).
-		SetConditionExpression(expr.KeyCondition()).
-		SetTableName(table), nil
-}
-
-func (d *DynamoDBClient) PutItem(m interface{}, table *string) error {
-	av, err := dynamodbattribute.MarshalMap(m)
-	// TODO delete after verify
-	if err != nil {
 		return err
 	}
-	_, err = d.client.PutItem(d.getPutItemInput(table, m, av))
+	input := (&dynamodb.PutItemInput{}).
+		SetItem(av).
+		SetConditionExpression(*expr.Condition()).
+		SetTableName(table)
+	_, err = d.client.PutItem(input)
 	// TODO log
 	return err
 }
 
-func (d *DynamoDBClient) getQuoteFromItems(items types.AWSAttrValMap) (*types.Quote, error) {
-	id := (&dynamodb.GetItemInput{}).SetKey(items[rand.Intn(5)])
-	r, err := d.client.GetItem(id)
-	// TODO log
-	if err != nil {
-		return nil, err
-	}
+func (d *DynamoDBClient) getQuoteFromItems(items types.AWSAttrValMap) *types.QuoteResponse {
 	var q types.Quote
-	err = dynamodbattribute.UnmarshalMap(r.Item, &q)
-	// TODO delete after verify
+	id := (&dynamodb.GetItemInput{}).SetKey(items[rand.Intn(5)])
+	// TODO log
+	r, err := d.client.GetItem(id)
 	if err != nil {
-		return err
+		return types.NewQuoteResponse().WithErr(err)
 	}
-	return &q, err
+	err = dynamodbattribute.UnmarshalMap(r.Item, &q)
+	return types.NewQuoteResponse().WithQuote(&q).WithErr(err)
 }
 
 // GetRandomQuote returns a random quote from the database by scanning
@@ -65,28 +61,15 @@ func (d *DynamoDBClient) GetRandomQuote() *types.QuoteResponse {
 	input := (&dynamodb.ScanInput{}).
 		SetTableName(d.QuoteTable).
 		SetProjectionExpression("ID").
-		SetLimit(aws.Int(5))
-	res, err := d.client.Scan(input())
-	if err != nil {
-		return &types.QuoteResponse{nil, err}
+		SetLimit(5)
+	if res, err := d.client.Scan(input); err != nil {
+		return types.NewQuoteResponse().WithErr(err)
+	} else {
+		return d.getQuoteFromItems(res.Items)
 	}
-	quote, err := d.getQuoteFromItems(res.Items)
-	return types.NewQuoteResponse().WithQuote(quote).WithErr(err)
 }
 
-func (d *DynamoDBClient) buildQueryInput(table *string, expr expression.Expression, av *types.AWSAttrValMap) *types.AWSQueryInput {
-	return (&dynamodb.QueryInput{}).
-		SetLimit(d.limit).
-		SetProjectionExpression(expr.Projection()).
-		SetTableName(table).
-		SetFilterExpression(expr.Filter()).
-		SetExpressionAttributeNames(expr.Names()).
-		SetExpressionAttributeValues(expr.Values()).
-		SetReturnConsumedCapacity(aws.String("INDEXES")).
-		SetExclusiveStartKey(av)
-}
-
-func (d *DynamoDBClient) getQueryInput(table, attr, start *string) (*types.AWSQueryInput, error) {
+func (d *DynamoDBClient) getQueryInput(table, attr, start string) (*types.AWSQueryInput, error) {
 	filt := expression.Equal(expression.Name("Name"), expression.Value(attr))
 	expr, err := expression.NewBuilder().
 		WithFilter(filt).
@@ -96,30 +79,39 @@ func (d *DynamoDBClient) getQueryInput(table, attr, start *string) (*types.AWSQu
 	if err != nil {
 		return nil, err
 	}
-	av, err := dynamodb.MarshalMap(struct{ ID string }{*start})
+	av, err := dynamodbattribute.MarshalMap(struct{ ID string }{start})
 	// TODO delete after verify
 	if err != nil {
 		return nil, err
 	}
-	return d.buildQueryInput(table, expr, av), nil
+	return (&dynamodb.QueryInput{}).
+		SetLimit(d.limit).
+		SetProjectionExpression(*expr.Projection()).
+		SetTableName(table).
+		SetFilterExpression(*expr.Filter()).
+		SetExpressionAttributeNames(expr.Names()).
+		SetExpressionAttributeValues(expr.Values()).
+		SetReturnConsumedCapacity("INDEXES").
+		SetExclusiveStartKey(av), nil
 }
 
 func (d *DynamoDBClient) BatchGetQuotes(table string, ids types.AWSAttrValMap) ([]*types.Quote, error) {
-	items := (&dynamodb.KeysAndAttributes{}).SetKeys(ids)
-	input := (&dynamodb.BatchGetItemInput{}).
-		SetRequestItems(items).
-		SetReturnConsumedCapacity(true)
-	res, err := d.client.BatchGetItem(input)
+	quotes := make([]*types.Quote, int(d.limit))
+	requestedItems := make(map[string]*dynamodb.KeysAndAttributes)
+	requestedItems[table] = (&dynamodb.KeysAndAttributes{}).SetKeys(ids)
+	res, err := d.client.BatchGetItem((&dynamodb.BatchGetItemInput{}).
+		SetRequestItems(requestedItems).
+		SetReturnConsumedCapacity("INDEXES"))
 	// TODO log
 	if err != nil {
-		return []*types.Quote{}, err
+		return quotes, err
 	}
-	var quotes []*types.Quote
-	err = dynamodbattribute.UnmarshalList(res.Responses[d.QuoteTable], &quotes)
+	list := res.Responses[d.QuoteTable]
+	err = dynamodbattribute.UnmarshalListOfMaps(list, &quotes)
 	return quotes, err
 }
 
-func (d *DynamoDBClient) GetQuotesByAttr(table, attr, start *string) *types.MultiQuoteResponse {
+func (d *DynamoDBClient) GetQuotesByAttr(table, attr, start string) *types.MultiQuoteResponse {
 	input, err := d.getQueryInput(table, attr, start)
 	// TODO delete after verify
 	if err != nil {
@@ -130,10 +122,10 @@ func (d *DynamoDBClient) GetQuotesByAttr(table, attr, start *string) *types.Mult
 	if err != nil {
 		return types.NewMultiQuoteResponse().WithErr(err)
 	}
-	if quotes, err := d.client.BatchGetQuotes(table, res.Items); err != nil {
+	if quotes, err := d.BatchGetQuotes(table, res.Items); err != nil {
 		return types.NewMultiQuoteResponse().WithErr(err)
 	} else {
-		last := res.LastEvaluatedKey["ID"]["S"]
+		last := *res.LastEvaluatedKey["ID"].S
 		return types.NewMultiQuoteResponse().WithQuotes(quotes).WithNext(last)
 	}
 }
