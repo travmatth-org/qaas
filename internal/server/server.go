@@ -12,9 +12,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Travmatth/qaas/internal/config"
-	"github.com/Travmatth/qaas/internal/logger"
-	"github.com/Travmatth/qaas/internal/middleware"
+	"github.com/travmatth-org/qaas/internal/config"
+	"github.com/travmatth-org/qaas/internal/logger"
+	"github.com/travmatth-org/qaas/internal/middleware"
 	"github.com/aws/aws-xray-sdk-go/xray"
 	"github.com/coreos/go-systemd/daemon"
 	"github.com/coreos/go-systemd/v22/activation"

@@ -37,6 +37,21 @@ run: build
 get: $(MAIN)
 	go get -v -t -d ./...
 
+db.local.start:
+	@docker run -d \
+		--name dynamodb \
+		-p 8000:8000 \
+		amazon/dynamodb-local \
+		-jar DynamoDBLocal.jar \
+		-inMemory -sharedDb
+
+db.local.create:
+	@./db/create_tables.sh http://localhost:8000
+
+db.local.stop:
+	@docker stop dynamodb
+	@docker rm dynamodb
+
 # manage codebuild dockerfile
 
 docker.build: deploy/docker/dev.dockerfile
@@ -52,9 +67,11 @@ clean:
 	go clean $(MAIN)
 	rm -f $(COVERAGE_OUT) $(COVERAGE_HTML)
 
-lint:
-	golint -set_exit_status ./...
+shellcheck:
 	shellcheck $(shell find . -type f -name "*.sh" -not -path "*vendor*")
+
+lint: shellcheck
+	golint -set_exit_status ./...
 
 vet:
 	go vet $(MAIN)

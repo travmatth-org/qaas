@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/Travmatth/qaas/internal/logger"
+	"github.com/travmatth-org/qaas/internal/logger"
 	"github.com/coreos/go-systemd/daemon"
 )
 
@@ -21,6 +21,8 @@ const (
 	index                        = "index.html"
 	notFound                     = "404.html"
 	name                         = "qaas"
+	defaultRegion                = "us-west-1"
+	devDbEndpoint                = "http://localhost:8000"
 )
 
 // Config manages the configuration options of the program.
@@ -34,6 +36,8 @@ type Config struct {
 	StopTimeout  int
 	IdleTimeout  int
 	Prod         bool
+	Region       string
+	DbEndpoint   string
 }
 
 // New construct and returns a config with default values,
@@ -74,12 +78,16 @@ func Build() *Config {
 	stopTimeout := flag.Int("stop-timeout", defaultStopTimeout, message)
 	message = "Set execution for production environment"
 	prod := flag.Bool("prod", false, message)
+	message = "Set region for AWS client sdk"
+	region := flag.String("region", defaultRegion, message)
+	message = "Set endpoint for dynamodb service"
+	endpoint := flag.String("endpoint", devDbEndpoint, message)
 
 	flag.Parse()
 
 	return &Config{
 		cwd, *ip, *port, *readTimeout, *writeTimeout,
-		*stopTimeout, *idleTimeout, *prod,
+		*stopTimeout, *idleTimeout, *prod, region, endpoint
 	}
 }
 
@@ -131,4 +139,16 @@ func (c Config) Get404() string {
 // IsProd returns bool representing whether program executing in dev mode
 func (c Config) IsProd() bool {
 	return c.Prod
+}
+
+func (c Config) GetAWSRegion() string {
+	return c.Region
+}
+
+func (c Config) GetDBEndpoint() string {
+	return c.Endpoint
+}
+
+func (c Config) GetDBArn() string {
+	return ""
 }
