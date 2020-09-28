@@ -8,59 +8,86 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strconv"
 	"syscall"
 	"time"
 
-	"github.com/travmatth-org/qaas/internal/config"
-	"github.com/travmatth-org/qaas/internal/logger"
-	"github.com/travmatth-org/qaas/internal/middleware"
 	"github.com/aws/aws-xray-sdk-go/xray"
 	"github.com/coreos/go-systemd/daemon"
 	"github.com/coreos/go-systemd/v22/activation"
 	"github.com/gorilla/mux"
 	"github.com/justinas/alice"
 	"github.com/rs/zerolog/hlog"
+	"github.com/travmatth-org/qaas/internal/config"
+	"github.com/travmatth-org/qaas/internal/logger"
+	"github.com/travmatth-org/qaas/internal/middleware"
 
 	"github.com/NYTimes/gziphandler"
 )
+
+type listener struct {
+	http net.Listener
+}
+
+type channel struct {
+	signal  chan os.Signal
+	error   chan error
+	started chan struct{}
+}
+
+type timeout struct {
+	stop time.Duration
+}
 
 // Server represents the running server with embedded
 // *http.Server, *mux.Router, zerolog.Logger instances
 // manages the configurations, starting, stopping and routing
 // of HTTP server instance
 type Server struct {
-	*config.Config
 	*mux.Router
 	*http.Server
-	stopTimeout    time.Duration
-	static         map[string][]byte
-	signalChannel  chan os.Signal
-	errorChannel   chan error
-	startedChannel chan struct{}
-	httpListener   net.Listener
+	address      string
+	config       *config.Config
+	static       map[string][]byte
+	listener listener
+	channel channel
+	timeout timeout
 }
 
 // New configures and returns a server instance struct.
 func New(c *config.Config) *Server {
 	router := mux.NewRouter()
-	return &Server{
-		Config: c,
-		Router: router,
+	s := &Server{
+		address: c.Net.IP + c.Net.Port,
+		config:  c,
+		Router:  router,
 		Server: &http.Server{
-			Addr:         c.GetAddress(),
-			WriteTimeout: c.GetWriteTimeout(),
-			ReadTimeout:  c.GetReadTimeout(),
-			IdleTimeout:  c.GetIdleTimeout(),
+			Addr:         c.Net.IP + c.Net.Port,
+			WriteTimeout: time.Duration(c.Timeout.Write) * time.Second,
+			ReadTimeout:  time.Duration(c.Timeout.Read) * time.Second,
+			IdleTimeout:  time.Duration(c.Timeout.Idle) * time.Second,
 			Handler:      router,
 		},
-		stopTimeout:    c.GetStopTimeout(),
-		static:         make(map[string][]byte),
-		signalChannel:  make(chan os.Signal, 1),
-		errorChannel:   make(chan error, 1),
-		startedChannel: make(chan struct{}),
-		httpListener:   nil,
+		channel: channel{
+			signal:  make(chan os.Signal, 1),
+			error:   make(chan error, 1),
+			started: make(chan struct{}),
+		},
+		timeout: timeout{
+			stop: time.Duration(c.Timeout.Stop) * time.Second,
+		},
+		static:       make(map[string][]byte),
+		listener: listener{
+			http: nil,
+		},
 	}
+	index := filepath.Join(s.config.Net.Static, "index.html")
+	missing := filepath.Join(s.config.Net.Static, "404.html")
+	s.HandleFunc("/", s.WrapRoute(s.ServeStatic(index)))
+	s.NotFoundHandler = s.WrapRoute(s.ServeStatic(missing))
+	logger.Info().Msg("Registered home and 404 html pages to endpoints")
+	return s
 }
 
 // WrapRoute composes endpoints by wrapping destination handler with handler
@@ -82,15 +109,6 @@ func (s *Server) WrapRoute(h http.HandlerFunc) http.HandlerFunc {
 		).ThenFunc(gzippedHandler)).ServeHTTP
 }
 
-// RegisterHandlers attemtps to prepare and register the specified
-// routes with the given middlewware on the server instance.
-func (s *Server) RegisterHandlers() {
-	index, notfound := s.GetIndexHTML(), s.Get404()
-	s.HandleFunc("/", s.WrapRoute(s.ServeStatic(index)))
-	s.NotFoundHandler = s.WrapRoute(s.ServeStatic(notfound))
-	logger.Info().Msg("Registered home and 404 html pages to endpoints")
-}
-
 // OpenListener returns a listener for the server to receive traffic on, or err
 func (s *Server) OpenListener() (net.Listener, error) {
 	// when systemd starts a process using socket-based activation it sets
@@ -107,7 +125,7 @@ func (s *Server) OpenListener() (net.Listener, error) {
 		return listeners[0], err
 	}
 	logger.Info().Msg("Activating non-systemd socket")
-	return net.Listen("tcp", s.Port)
+	return net.Listen("tcp", s.config.Net.Port)
 }
 
 // AcceptConnections listens on the configured address and ports for http
@@ -115,53 +133,59 @@ func (s *Server) OpenListener() (net.Listener, error) {
 // either a server error or a shutdown signal
 func (s *Server) AcceptConnections() error {
 	// register and intercept shutdown signals
-	signal.Notify(s.signalChannel, os.Interrupt)
+	signal.Notify(s.channel.signal, os.Interrupt)
 
-	ln, err := s.OpenListener()
-	if err != nil {
+	switch ln, err := s.OpenListener(); {
+	case err != nil:
 		logger.Error().Err(err).Msg("Error initializing listener for http server")
 		return err
+	default:
+		s.listener.http = ln
+		close(s.channel.started)
 	}
-	s.httpListener = ln
-	close(s.startedChannel)
 
-	// process incoming requests, close on err or force shutdown on signal
-	go s.startServing()
+	// process incoming requests
+	go s.start()
+
+	// close on err or force shutdown on signal
 	select {
-	case err := <-s.errorChannel:
+	case err := <-s.channel.error:
 		logger.Error().Err(err).Msg("Error occurred, shutting down")
 		return err
-	case sig := <-s.signalChannel:
-		ctx, cancel := context.WithTimeout(context.Background(), s.stopTimeout)
+	case sig := <-s.channel.signal:
+		ctx, cancel := context.WithTimeout(context.Background(), s.timeout.stop)
 		defer cancel()
-		shutdownErr := s.Shutdown(ctx)
-		logger.Error().
-			Err(shutdownErr).
-			Str("signal", sig.String()).
-			Msg("Received signal, shutting down")
-		return shutdownErr
+		err, str := s.Shutdown(ctx), sig.String() 
+		logger.Error().Err(err).Str("sig", str).Msg("Received signal, shutting down")
+		return err
+	}
+}
+
+func (s *Server) GetLivenessCheck() (time.Duration, error) {
+	if s.config.Env == config.Production {
+		return time.Duration(s.config.Net.Liveness) * time.Second, nil
+	}
+	switch interval, err := daemon.SdWatchdogEnabled(false); {
+	case err != nil:
+		return time.Duration(0), err
+	case interval <= 0:
+		message := "Liveness Interval must be greater than 0"
+		return time.Duration(0), errors.New(message)
+	default:
+		return interval, nil
 	}
 }
 
 // LivenessCheck retrieves home page  to verify the liveness of the server,
-// then notifies the systemd daemon to pass the check.
-func (s *Server) LivenessCheck() {
-	interval, err := s.GetLivenessCheckInterval()
-	if err != nil || interval == 0 {
-		logger.Info().
-			Err(err).
-			Dur("interval", interval).
-			Msg("Not starting readiness checks")
-		return
-	}
+// then notifies the systemd daemon to pass the check, systemd will restart server fails health check, 
+func (s *Server) LivenessCheck(interval time.Duration) {
 	for {
-		// If server fails health check, systemd will restart
-		_, err = http.Get(s.GetAddress())
-		if err == nil {
+		_, err := http.Get(s.address)
+		if err != nil {
 			logger.Error().Err(err).Msg("Liveness check failed")
 			return
 		}
-		_, err := daemon.SdNotify(false, daemon.SdNotifyWatchdog)
+		_, err = daemon.SdNotify(false, daemon.SdNotifyWatchdog)
 		if err != nil {
 			logger.Error().Err(err).Msg("Error in systemd health check")
 			return
@@ -171,22 +195,29 @@ func (s *Server) LivenessCheck() {
 }
 
 // serve http on given listener, or return if no listener
-func (s *Server) startServing() {
-	if s.httpListener == nil {
-		s.errorChannel <- errors.New("Not listening on port")
+func (s *Server) start() {
+	if s.listener.http == nil {
+		s.channel.error <- errors.New("Not listening on port")
 		return
 	}
-	addr, dir := s.GetAddress(), s.Static
-	logger.Info().Str("addr", addr).Str("static", dir).Msg("Started")
+
+	static := s.config.Net.Static
+	logger.Info().Str("addr", s.address).Str("static", static).Msg("Started")
+
 	// drop permissions before serving
 	_ = syscall.Umask(0022)
+
 	// notify systemd daemon server is ready
-	if s.IsProd() {
-		_, err := daemon.SdNotify(false, daemon.SdNotifyReady)
-		if err != nil {
-			logger.Error().Err(err).Msg("Error notifying systemd of readiness")
+	if s.config.Env == config.Production {
+		if _, err := daemon.SdNotify(false, daemon.SdNotifyReady); err != nil {
+			message := "Error notifying systemd of readiness"
+			logger.Error().Err(err).Msg(message)
+		} else if dur, err := s.GetLivenessCheck(); err != nil {
+			message := "Not starting readiness checks"
+			logger.Warn().Err(err).Dur("duration", dur).Msg(message)
+		} else {
+			go s.LivenessCheck(dur)
 		}
-		go s.LivenessCheck()
 	}
-	s.errorChannel <- s.Serve(s.httpListener)
+	s.channel.error <- s.Serve(s.listener.http)
 }

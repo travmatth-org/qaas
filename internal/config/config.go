@@ -1,171 +1,106 @@
 package config
 
 import (
-	"flag"
 	"os"
+	"errors"
+	"io/ioutil"
 	"path/filepath"
-	"time"
 
-	"github.com/coreos/go-systemd/daemon"
-	"github.com/travmatth-org/qaas/internal/logger"
+	"gopkg.in/yaml.v2"
 )
 
 const (
-	defaultIP                    = "0.0.0.0"
-	defaultPort                  = ":80"
-	defaultReadTimeout           = 5
-	defaultWriteTimeout          = 5
-	defaultStopTimeout           = 5
-	defaultIdleTimeout           = 5
-	defaultLivenessCheckInterval = 10
-	index                        = "index.html"
-	notFound                     = "404.html"
-	name                         = "qaas"
-	defaultRegion                = "us-west-1"
-	devDbEndpoint                = "http://localhost:8000"
-	defaultPagination            = 5
-	defaultQuoteTable            = "qaas-quote-table"
-	defaultAuthorTable           = "qaas-author-table"
-	defaultTopicTable            = "qaas-topic-table"
+	Development = "DEVELOPMENT"
+	Test        = "TEST"
+	Production  = "PRODUCTION"
 )
 
 // Config manages the configuration options of the program.
-// All members are unexported, accessed solely through member methods
+// Program options are configured first attempting to locate and open
+// `httpd.yml`, first in the current working directory then in /etc/qaas
+// Default values given in config are overriden by env var specified under the
+// `env:"<VAL>"` attribute tags, and then by cli flags specified under the
+// `cli:"<VAL"` attribute tag
 type Config struct {
-	Static          string
-	IP              string
-	Port            string
-	ReadTimeout     int
-	WriteTimeout    int
-	StopTimeout     int
-	IdleTimeout     int
-	Prod            bool
-	Region          string
-	DBEndpoint      string
-	PaginationLimit int64
-	QuoteTable      string
-	AuthorTable     string
-	TopicTable      string
-}
+	Env string `yaml:"env" env:"ENV" cli:"env"`
 
-// New construct and returns a config with default values,
-// for use in testing server. Static dir defaults to dev value,
-// Build() will overwrite with cwd
-func New() *Config {
-	return &Config{
-		Static:          filepath.Join("web", "www", "static"),
-		IP:              defaultIP,
-		Port:            defaultPort,
-		ReadTimeout:     defaultReadTimeout,
-		WriteTimeout:    defaultWriteTimeout,
-		StopTimeout:     defaultStopTimeout,
-		IdleTimeout:     defaultIdleTimeout,
-		Prod:            false,
-		Region:          defaultRegion,
-		DBEndpoint:      devDbEndpoint,
-		PaginationLimit: defaultPagination,
-		QuoteTable:      defaultQuoteTable,
-		AuthorTable:     defaultAuthorTable,
-		TopicTable:      defaultTopicTable,
+	Net struct {
+		Static   string `yaml:"static" env:"STATIC" cli:"static"`
+		IP       string `yaml:"ip" env:"IP" cli:"ip"`
+		Port     string `yaml:"port" env:"PORT" cli:"port"`
+		Liveness int    `yaml:"liveness" env:"liveness" cli:"liveness"`
+	}
+
+	Timeout struct {
+		Read  int `yaml:"read" env:"READ_TIMEOUT" cli:"read-timeout"`
+		Write int `yaml:"write" env:"WRITE_TIMEOUT" cli:"write-timeout"`
+		Stop  int `yaml:"stop" env:"STOP_TIMEOUT" cli:"stop-timeout"`
+		Idle  int `yaml:"idle" env:"IDLE_TIMEOUT" cli:"idle-timeout"`
+	}
+
+	AWS struct {
+		Region   string `yaml:"region" env:"AWS_REGION" cli:"region"`
+		DynamoDB struct {
+			Endpoint        string `yaml:"dev_db_endpoint" env:"DB_ENDPOINT" cli:"db-endpoint"`
+			PaginationLimit int64  `yaml:"pagination_limit" env:"PAGINATION" cli:"db-pagination"`
+			Table           struct {
+				Quote  string `yaml:"quote" env:"QUOTE_TABLE" cli:"quote-table"`
+				Author string `yaml:"author" env:"AUTHOR_TABLE" cli:"author-table"`
+				Topic  string `yaml:"topic" env:"TOPIC_TABLE" cli:"topic-table"`
+			}
+		}
 	}
 }
 
-// Build uses `flag` package to build and return config struct.
-func Build() *Config {
-	cwd, err := os.Getwd()
+type ConfigOpt func(c *Config) (*Config, error)
+
+func New(opts ...ConfigOpt) (*Config, error) {
+	var err error
+	c := &Config{}
+	for _, opt := range opts {
+		if c, err = opt(c); err != nil {
+			return nil, err
+		}
+	}
+	return c, nil
+}
+
+// WithConfigFile locates and parses the config file into the *config struct
+func WithConfigFile(c *Config) (*Config, error) {
+	configFile, err := locateConfigFile()
 	if err != nil {
-		logger.Error().Err(err).Msg("Error initializing configuration")
-		return nil
+		return nil, err
 	}
-	cwd = filepath.Join(cwd, "web", "www", "static")
-	message := "ip server should listen on"
-	ip := flag.String("ip", defaultIP, message)
-	message = "Port server should listen on"
-	port := flag.String("port", defaultPort, message)
-	message = "Default timeout period for HTTP responses"
-	readTimeout := flag.Int("read-timeout", defaultReadTimeout, message)
-	message = "Default timeout period for HTTP responses"
-	writeTimeout := flag.Int("write-timeout", defaultWriteTimeout, message)
-	message = "Default idle period for HTTP responses"
-	idleTimeout := flag.Int("idle-timeout", defaultIdleTimeout, message)
-	message = "Default timeout for server to wait for existing connections to close"
-	stopTimeout := flag.Int("stop-timeout", defaultStopTimeout, message)
-	message = "Set execution for production environment"
-	prod := flag.Bool("prod", false, message)
-	message = "Set region for AWS client sdk"
-	region := flag.String("region", defaultRegion, message)
-	message = "Set endpoint for dynamodb service"
-	endpoint := flag.String("endpoint", devDbEndpoint, message)
-	message = "Set limit for dynamodb service pagination"
-	paginationLimit := flag.Int64("paginationLimit", defaultPagination, message)
+	return c, yaml.Unmarshal(configFile, c)
+}
 
-	flag.Parse()
-
-	return &Config{
-		cwd, *ip, *port, *readTimeout, *writeTimeout,
-		*stopTimeout, *idleTimeout, *prod, *region, *endpoint, *paginationLimit,
-		defaultQuoteTable, defaultAuthorTable, defaultTopicTable,
+func WithOverrides(opts []string) ConfigOpt {
+	return func(c *Config) (*Config, error) {
+		n := len(opts)
+		if n % 2 != 0 {
+			message := "Parsing Error: All opts must be passed in --flag <val> format"
+			return nil, errors.New(message)
+		}
+		m := make(map[string]string, n / 2)
+		for i := 0; i <= n; i += 2 {
+			m[opts[i]] = opts[i + 1]
+		}
+		return ParseOverrides(c, m)
 	}
 }
 
-// GetLivenessCheckInterval returns the interval on which to conduct liveness
-// checks in production, uses socket to get httpd.service watchdog interval from
-// systemd daemon
-func (c Config) GetLivenessCheckInterval() (time.Duration, error) {
-	if c.IsProd() {
-		return daemon.SdWatchdogEnabled(false)
+func locateConfigFile() ([]byte, error) {
+	dir, err := os.Getwd()
+	if err != nil {
+		return nil, err
 	}
-	return defaultLivenessCheckInterval, nil
-}
-
-// GetReadTimeout returns the time.Duration of the read timeout
-func (c Config) GetReadTimeout() time.Duration {
-	return time.Duration(c.ReadTimeout) * time.Second
-}
-
-// GetWriteTimeout returns the time.Duration of the write timeout
-func (c Config) GetWriteTimeout() time.Duration {
-	return time.Duration(c.WriteTimeout) * time.Second
-}
-
-// GetIdleTimeout returns the time.Duration of the idle timeout
-func (c Config) GetIdleTimeout() time.Duration {
-	return time.Duration(c.IdleTimeout) * time.Second
-}
-
-// GetStopTimeout returns the time.Duration of the stop timeout
-func (c Config) GetStopTimeout() time.Duration {
-	return time.Duration(c.StopTimeout) * time.Second
-}
-
-// GetAddress returns the address:port of the server and port to listen on
-func (c Config) GetAddress() string {
-	return c.IP + c.Port
-}
-
-// GetIndexHTML returns the filename of the html page
-func (c Config) GetIndexHTML() string {
-	return filepath.Join(c.Static, index)
-}
-
-// Get404 returns the filename of the 404 page
-func (c Config) Get404() string {
-	return filepath.Join(c.Static, notFound)
-}
-
-// IsProd returns bool representing whether program executing in dev mode
-func (c Config) IsProd() bool {
-	return c.Prod
-}
-
-func (c Config) GetAWSRegion() string {
-	return c.Region
-}
-
-func (c Config) GetDBEndpoint() string {
-	return c.DBEndpoint
-}
-
-func (c Config) GetDBRoleARN() string {
-	return ""
+	cwd := filepath.Join(dir, "httpd.yml")
+	etc := filepath.Join("etc", "qaas", "httpd.yml")
+	if _, err := os.Stat(cwd); !os.IsNotExist(err) {
+		return ioutil.ReadFile(cwd)
+	} else if _, err := os.Stat(etc); !os.IsNotExist(err) {
+		return ioutil.ReadFile(etc)
+	} else {
+		return []byte{}, err
+	}
 }

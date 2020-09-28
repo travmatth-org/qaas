@@ -12,13 +12,16 @@ import (
 )
 
 func main() {
-	c := config.Build()
-	if c == nil {
-		logger.Error().Msg("Error configuring server")
+	c, err := config.New(
+		config.WithConfigFile,
+		config.WithOverrides(os.Args),
+	)
+	if err != nil {
+		logger.Error().Err(err).Msg("Error configuring server")
 		os.Exit(1)
 	}
 
-	if c.IsProd() {
+	if c.Env == config.Production {
 		ec2.Init()
 		err := xray.Configure(xray.Config{ServiceVersion: "1.2.3"})
 		if err != nil {
@@ -29,7 +32,6 @@ func main() {
 
 	// Create server
 	s := server.New(c)
-	s.RegisterHandlers()
 
 	// run server
 	if err := s.AcceptConnections(); err != nil {
