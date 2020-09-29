@@ -4,14 +4,10 @@ import (
 	"math/rand"
 
 	"github.com/travmatth-org/qaas/internal/types"
-	// "github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/aws/aws-sdk-go/service/dynamodb/expression"
 )
-
-// func (d *DynamoDBClient) getPutItemInput(table *string, av types.AWSAttrVal, cond types.AWSConditionBuilder) (*types.AWSGetItemInput, error) {
-// }
 
 func (d *DynamoDBClient) PutItem(m interface{}, table string) error {
 	av, err := dynamodbattribute.MarshalMap(m)
@@ -43,13 +39,13 @@ func (d *DynamoDBClient) PutItem(m interface{}, table string) error {
 }
 
 func (d *DynamoDBClient) getQuoteFromItems(items types.AWSAttrValMap) *types.QuoteResponse {
-	var q types.Quote
 	id := (&dynamodb.GetItemInput{}).SetKey(items[rand.Intn(5)])
 	// TODO log
 	r, err := d.client.GetItem(id)
 	if err != nil {
 		return types.NewQuoteResponse().WithErr(err)
 	}
+	var q types.Quote
 	err = dynamodbattribute.UnmarshalMap(r.Item, &q)
 	return types.NewQuoteResponse().WithQuote(&q).WithErr(err)
 }
@@ -58,15 +54,14 @@ func (d *DynamoDBClient) getQuoteFromItems(items types.AWSAttrValMap) *types.Quo
 // over the quotes table and projecting the entries into an array of [id].
 // A random Id is selected from the list, and the quote fetched
 func (d *DynamoDBClient) GetRandomQuote() *types.QuoteResponse {
-	input := (&dynamodb.ScanInput{}).
+	res, err := d.client.Scan((&dynamodb.ScanInput{}).
 		SetTableName(d.QuoteTable).
 		SetProjectionExpression("ID").
-		SetLimit(5)
-	if res, err := d.client.Scan(input); err != nil {
+		SetLimit(5))
+	if err != nil {
 		return types.NewQuoteResponse().WithErr(err)
-	} else {
-		return d.getQuoteFromItems(res.Items)
 	}
+	return d.getQuoteFromItems(res.Items)
 }
 
 func (d *DynamoDBClient) getQueryInput(table, attr, start string) (*types.AWSQueryInput, error) {
@@ -128,4 +123,29 @@ func (d *DynamoDBClient) GetQuotesByAttr(table, attr, start string) *types.Multi
 		last := *res.LastEvaluatedKey["ID"].S
 		return types.NewMultiQuoteResponse().WithQuotes(quotes).WithNext(last)
 	}
+}
+
+func (d *DynamoDBClient) GetQuotesByTopic(topic, start string) *types.MultiQuoteResponse {
+	return d.GetQuotesByAttr(d.TopicTable, topic, start)
+}
+
+func (d *DynamoDBClient) GetQuotesByAuthor(author, start string) *types.MultiQuoteResponse {
+	return d.GetQuotesByAttr(d.AuthorTable, author, start)
+}
+
+// PutQuote enters a new quote, adding Quote, Author, and Topics to tables
+func (d *DynamoDBClient) PutQuote(quote, from string, topics []string) error {
+	q := types.NewQuote().WithText(quote).WithAuthor(from).WithTopics(topics)
+	if err := d.PutItem(q, d.QuoteTable); err != nil {
+		return err
+	}
+	for _, topic := range q.Topics {
+		t := types.NewTopic().WithName(topic).WithQuoteID(q.ID)
+		err := d.PutItem(t, d.TopicTable)
+		if err != nil {
+			return err
+		}
+	}
+	author := types.NewAuthor().WithName(from).WithQuoteID(q.ID)
+	return d.PutItem(author, d.AuthorTable)
 }

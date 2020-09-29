@@ -47,15 +47,16 @@ func (p *parser) walkFields(v reflect.Value, tag string) error {
 			}
 		case k == reflect.String:
 			v.Field(i).SetString(tag)
-		case k != reflect.Int || k != reflect.Int64:
-			switch env, err := strconv.Atoi(tag); {
-			case err != nil:
-				return err
-			case v.OverflowInt(int64(env)):
-				return errors.New("Config Parsing Error: " + tag + " Overflows Int64")
-			default:
-				v.Field(i).SetInt(int64(env))
-			}
+		case k != reflect.Int && k != reflect.Int64:
+			return nil
+		}
+		switch env, err := strconv.Atoi(tag); {
+		case err != nil:
+			return err
+		case v.OverflowInt(int64(env)):
+			return errors.New("Config Parse Error: " + tag + " Overflows Int64")
+		default:
+			v.Field(i).SetInt(int64(env))
 		}
 	}
 	return nil

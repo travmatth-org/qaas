@@ -66,12 +66,15 @@ func New(opts ...ConfigOpt) (*Config, error) {
 }
 
 // WithConfigFile locates and parses the config file into the *config struct
-func WithConfigFile(c *Config) (*Config, error) {
-	configFile, err := locateConfigFile()
-	if err != nil {
-		return nil, err
+func WithConfigFile(locate func() ([]byte, error)) ConfigOpt {
+	return func(c *Config) (*Config, error) {
+		switch filename, err := locate(); {
+		case err != nil:
+			return nil, err
+		default:
+			return c, yaml.Unmarshal(filename, c)
+		}
 	}
-	return c, yaml.Unmarshal(configFile, c)
 }
 
 func WithOverrides(opts []string) ConfigOpt {
@@ -89,7 +92,7 @@ func WithOverrides(opts []string) ConfigOpt {
 	}
 }
 
-func locateConfigFile() ([]byte, error) {
+func LocateConfig() ([]byte, error) {
 	dir, err := os.Getwd()
 	if err != nil {
 		return nil, err
@@ -103,4 +106,8 @@ func locateConfigFile() ([]byte, error) {
 	} else {
 		return []byte{}, err
 	}
+}
+
+func IsProd(c *Config) bool {
+	return c.Env == Production
 }

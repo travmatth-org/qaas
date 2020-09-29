@@ -19,6 +19,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/justinas/alice"
 	"github.com/rs/zerolog/hlog"
+	"github.com/travmatth-org/qaas/internal/api"
 	"github.com/travmatth-org/qaas/internal/config"
 	"github.com/travmatth-org/qaas/internal/logger"
 	"github.com/travmatth-org/qaas/internal/middleware"
@@ -48,19 +49,20 @@ type Server struct {
 	*mux.Router
 	*http.Server
 	address      string
+	static       map[string]string
 	config       *config.Config
-	static       map[string][]byte
+	api *api.API
 	listener listener
 	channel channel
 	timeout timeout
 }
 
+type serverOpt func(s *Server) (*Server, error)
+
 // New configures and returns a server instance struct.
-func New(c *config.Config) *Server {
+func New(c *config.Config, opts ...serverOpt) (*Server, error) {
 	router := mux.NewRouter()
 	s := &Server{
-		address: c.Net.IP + c.Net.Port,
-		config:  c,
 		Router:  router,
 		Server: &http.Server{
 			Addr:         c.Net.IP + c.Net.Port,
@@ -69,6 +71,10 @@ func New(c *config.Config) *Server {
 			IdleTimeout:  time.Duration(c.Timeout.Idle) * time.Second,
 			Handler:      router,
 		},
+		address: c.Net.IP + c.Net.Port,
+		static: make(map[string]string, 0),
+		config: c,
+		api: nil,
 		channel: channel{
 			signal:  make(chan os.Signal, 1),
 			error:   make(chan error, 1),
@@ -77,17 +83,49 @@ func New(c *config.Config) *Server {
 		timeout: timeout{
 			stop: time.Duration(c.Timeout.Stop) * time.Second,
 		},
-		static:       make(map[string][]byte),
 		listener: listener{
 			http: nil,
 		},
 	}
-	index := filepath.Join(s.config.Net.Static, "index.html")
-	missing := filepath.Join(s.config.Net.Static, "404.html")
-	s.HandleFunc("/", s.WrapRoute(s.ServeStatic(index)))
-	s.NotFoundHandler = s.WrapRoute(s.ServeStatic(missing))
+	var err error
+	for _, opt := range opts {
+		if s, err = opt(s); err != nil {
+			return nil, err
+		}
+	}
+	return s, nil
+}
+
+func WithStatic(s *Server) (*Server, error) {
+	walk := func(path string, info os.FileInfo, err error) error {
+		if filepath.Ext(path) == ".html" {
+			s.static[info.Name()] = path
+		}
+		return nil
+	}
+	cwd, err := os.Getwd()
+	if err != nil {
+		return nil, err
+	}
+	dir := filepath.Join(cwd, s.config.Net.Static)
+	if err := filepath.Walk(dir, walk); err != nil {
+		return nil, err
+	}
+	return s, err
+}
+
+func WithAPI(a *api.API) serverOpt {
+	return func(s *Server) (*Server, error) {
+		s.api = a
+		return s, nil
+	}
+}
+
+func WithRegisterStaticPages(s *Server) (*Server, error) {
+	s.HandleFunc("/", s.WrapRoute(s.ServeStatic(s.static["index"])))
+	s.NotFoundHandler = s.WrapRoute(s.ServeStatic(s.static["404"]))
 	logger.Info().Msg("Registered home and 404 html pages to endpoints")
-	return s
+	return s, nil
 }
 
 // WrapRoute composes endpoints by wrapping destination handler with handler
@@ -126,39 +164,6 @@ func (s *Server) OpenListener() (net.Listener, error) {
 	}
 	logger.Info().Msg("Activating non-systemd socket")
 	return net.Listen("tcp", s.config.Net.Port)
-}
-
-// AcceptConnections listens on the configured address and ports for http
-// traffic. Simultaneously listens for incoming os signals, will return on
-// either a server error or a shutdown signal
-func (s *Server) AcceptConnections() error {
-	// register and intercept shutdown signals
-	signal.Notify(s.channel.signal, os.Interrupt)
-
-	switch ln, err := s.OpenListener(); {
-	case err != nil:
-		logger.Error().Err(err).Msg("Error initializing listener for http server")
-		return err
-	default:
-		s.listener.http = ln
-		close(s.channel.started)
-	}
-
-	// process incoming requests
-	go s.start()
-
-	// close on err or force shutdown on signal
-	select {
-	case err := <-s.channel.error:
-		logger.Error().Err(err).Msg("Error occurred, shutting down")
-		return err
-	case sig := <-s.channel.signal:
-		ctx, cancel := context.WithTimeout(context.Background(), s.timeout.stop)
-		defer cancel()
-		err, str := s.Shutdown(ctx), sig.String() 
-		logger.Error().Err(err).Str("sig", str).Msg("Received signal, shutting down")
-		return err
-	}
 }
 
 func (s *Server) GetLivenessCheck() (time.Duration, error) {
@@ -220,4 +225,35 @@ func (s *Server) start() {
 		}
 	}
 	s.channel.error <- s.Serve(s.listener.http)
+}
+
+// AcceptConnections listens on the configured address and ports for http
+// traffic. Simultaneously listens for incoming os signals, will return on
+// either a server error or a shutdown signal
+func (s *Server) AcceptConnections() error {
+	// register and intercept shutdown signals
+	signal.Notify(s.channel.signal, os.Interrupt)
+
+	switch ln, err := s.OpenListener(); {
+	case err != nil:
+		logger.Error().Err(err).Msg("Error initializing listener for http server")
+		return err
+	default:
+		s.listener.http = ln
+		close(s.channel.started)
+	}
+
+	// process incoming requests
+	go s.start()
+
+	// close on err or force shutdown on signal
+	select {
+	case err := <-s.channel.error:
+		return err
+	case sig := <-s.channel.signal:
+		logger.Info().Msg(fmt.Sprintf("Received signal", sig.String()))
+		ctx, cancel := context.WithTimeout(context.Background(), s.timeout.stop)
+		defer cancel()
+		return s.Shutdown(ctx)
+	}
 }

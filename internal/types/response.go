@@ -5,28 +5,18 @@ type QuoteResponse struct {
 	Err   error
 }
 
-type quoteResponseOpt func(q *QuoteResponse) *QuoteResponse
+func NewQuoteResponse() *QuoteResponse {
+	return &QuoteResponse{}
+}
 
-func NewQuoteResponse(opts ...quoteResponseOpt) *QuoteResponse {
-	q := &QuoteResponse{}
-	for _, opt := range opts {
-		q = opt(q)
-	}
+func (q *QuoteResponse) WithQuote(quote *Quote) *QuoteResponse {
+	q.Quote = quote
 	return q
 }
 
-func (q *QuoteResponse) WithQuote(quote *Quote) *quoteResponseOpt {
-	return func(q *QuoteResponse) *QuoteResponse {
-		q.Quote = quote
-		return q
-	}
-}
-
-func (q *QuoteResponse) WithErr(err error) *quoteResponseOpt {
-	return func(q *QuoteResponse) *QuoteResponse {
-		q.Err = err
-		return q
-	}
+func (q *QuoteResponse) WithErr(err error) *QuoteResponse {
+	q.Err = err
+	return q
 }
 
 type MultiQuoteResponse struct {
@@ -35,33 +25,21 @@ type MultiQuoteResponse struct {
 	Err    error
 }
 
-type multiQuoteResponseOpt func(q *MultiQuoteResponse) *MultiQuoteResponse
+func NewMultiQuoteResponse() *MultiQuoteResponse {
+	return &MultiQuoteResponse{}
+}
 
-func MultiNewQuoteResponse(opts ...multiQuoteResponseOpt) *MultiQuoteResponse {
-	m := &MultiQuoteResponse{}
-	for _, opt := range opts {
-		m = opt(m)
-	}
+func (m *MultiQuoteResponse) WithQuotes(q []*Quote) *MultiQuoteResponse {
+	m.Quotes = q
 	return m
 }
 
-func (m *MultiQuoteResponse) WithQuotes(q []*Quote) *multiQuoteResponseOpt {
-	return func(m *MultiQuoteResponse) *MultiQuoteResponse {
-		m.Quotes = q
-		return m
-	}
+func (m *MultiQuoteResponse) WithNext(n string) *MultiQuoteResponse {
+	m.Next = n
+	return m
 }
 
-func (m *MultiQuoteResponse) WithNext(n string) *multiQuoteResponseOpt {
-	return func(m *MultiQuoteResponse) *MultiQuoteResponse {
-		m.Next = n
-		return m
-	}
-}
-
-func (m *MultiQuoteResponse) WithErr(e error) *multiQuoteResponseOpt {
-	return func(m *MultiQuoteResponse) *MultiQuoteResponse {
-		m.Err = e
-		return m
-	}
+func (m *MultiQuoteResponse) WithErr(e error) *MultiQuoteResponse {
+	m.Err = e
+	return m
 }
