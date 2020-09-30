@@ -1,9 +1,9 @@
 package config
 
 import (
-	"os"
 	"errors"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	"gopkg.in/yaml.v2"
@@ -66,7 +66,7 @@ func New(opts ...ConfigOpt) (*Config, error) {
 }
 
 // WithConfigFile locates and parses the config file into the *config struct
-func WithConfigFile(locate func() ([]byte, error)) ConfigOpt {
+func WithFile(locate func() ([]byte, error)) ConfigOpt {
 	return func(c *Config) (*Config, error) {
 		switch filename, err := locate(); {
 		case err != nil:
@@ -77,22 +77,23 @@ func WithConfigFile(locate func() ([]byte, error)) ConfigOpt {
 	}
 }
 
-func WithOverrides(opts []string) ConfigOpt {
+func WithUpdates(opts []string) ConfigOpt {
 	return func(c *Config) (*Config, error) {
 		n := len(opts)
-		if n % 2 != 0 {
+		if n%2 != 0 {
 			message := "Parsing Error: All opts must be passed in --flag <val> format"
 			return nil, errors.New(message)
 		}
-		m := make(map[string]string, n / 2)
+		m := make(map[string]string, n/2)
 		for i := 0; i <= n; i += 2 {
-			m[opts[i]] = opts[i + 1]
+			m[opts[i]] = opts[i+1]
 		}
-		return ParseOverrides(c, m)
+		err := ParseOverrides(c, m)
+		return c, err
 	}
 }
 
-func LocateConfig() ([]byte, error) {
+func Locate() ([]byte, error) {
 	dir, err := os.Getwd()
 	if err != nil {
 		return nil, err

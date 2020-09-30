@@ -48,16 +48,26 @@ type timeout struct {
 type Server struct {
 	*mux.Router
 	*http.Server
+	api *api.API
 	address      string
 	static       map[string]string
 	config       *config.Config
-	api *api.API
 	listener listener
 	channel channel
 	timeout timeout
 }
 
 type serverOpt func(s *Server) (*Server, error)
+
+func build(s *Server, opts ...serverOpt) (*Server, error) {
+	var err error
+	for _, opt := range opts {
+		if s, err = opt(s); err != nil {
+			return nil, err
+		}
+	}
+	return s, nil
+}
 
 // New configures and returns a server instance struct.
 func New(c *config.Config, opts ...serverOpt) (*Server, error) {
@@ -71,10 +81,10 @@ func New(c *config.Config, opts ...serverOpt) (*Server, error) {
 			IdleTimeout:  time.Duration(c.Timeout.Idle) * time.Second,
 			Handler:      router,
 		},
+		api: nil,
 		address: c.Net.IP + c.Net.Port,
 		static: make(map[string]string, 0),
 		config: c,
-		api: nil,
 		channel: channel{
 			signal:  make(chan os.Signal, 1),
 			error:   make(chan error, 1),
@@ -87,13 +97,7 @@ func New(c *config.Config, opts ...serverOpt) (*Server, error) {
 			http: nil,
 		},
 	}
-	var err error
-	for _, opt := range opts {
-		if s, err = opt(s); err != nil {
-			return nil, err
-		}
-	}
-	return s, nil
+	return build(s, opts...)
 }
 
 func WithStatic(s *Server) (*Server, error) {
@@ -121,18 +125,23 @@ func WithAPI(a *api.API) serverOpt {
 	}
 }
 
-func WithRegisterStaticPages(s *Server) (*Server, error) {
-	s.HandleFunc("/", s.WrapRoute(s.ServeStatic(s.static["index"])))
-	s.NotFoundHandler = s.WrapRoute(s.ServeStatic(s.static["404"]))
-	logger.Info().Msg("Registered home and 404 html pages to endpoints")
-	return s, nil
+func WithStaticPages(isProd bool) serverOpt {
+	return func(s *Server) (*Server, error) {
+		s.HandleFunc("/", s.WrapRoute(s.ServeStatic(s.static["index"]), isProd))
+		s.NotFoundHandler = s.WrapRoute(s.ServeStatic(s.static["404"]), isProd)
+		logger.Info().Msg("Registered home and 404 html pages to endpoints")
+		return s, nil
+	}
 }
 
 // WrapRoute composes endpoints by wrapping destination handler with handler
 // pipeline providing tracing with aws x-ray, injecting logging middleware
 // with request details into the context, and error recovery middleware,
 // and gzipping the response
-func (s *Server) WrapRoute(h http.HandlerFunc) http.HandlerFunc {
+func (s *Server) WrapRoute(h http.HandlerFunc, isProd bool) http.HandlerFunc {
+	if !isProd {
+		return h
+	}
 	gzippedHandler := gziphandler.GzipHandler(h).ServeHTTP
 	return xray.Handler(
 		xray.NewFixedSegmentNamer("qaas-httpd"),
@@ -251,7 +260,7 @@ func (s *Server) AcceptConnections() error {
 	case err := <-s.channel.error:
 		return err
 	case sig := <-s.channel.signal:
-		logger.Info().Msg(fmt.Sprintf("Received signal", sig.String()))
+		logger.Info().Msg("Received signal: " + sig.String())
 		ctx, cancel := context.WithTimeout(context.Background(), s.timeout.stop)
 		defer cancel()
 		return s.Shutdown(ctx)
