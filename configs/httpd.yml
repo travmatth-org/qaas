@@ -1,6 +1,6 @@
 env: PRODUCTION
 net:
-  static: /web/www/static
+  static: /srv/web/www/static
   ip: 0.0.0.0
   port: :80
   liveness: 10

@@ -41,20 +41,20 @@ func (p *parser) walkFields(v reflect.Value, tag string) error {
 	switch k := v.Kind(); {
 	case k == reflect.Struct:
 		for i := 0; i < v.NumField(); i++ {
-			f := v.Field(i)
-			next := p.getTagVal(v.Type().Field(i))
+			f, sf := v.Field(i), v.Type().Field(i)
+			next := p.getTagVal(sf)
 			if err := p.walkFields(f, next); err != nil {
 				return err
 			}
 		}
-	case k == reflect.String:
+	case k == reflect.String && tag != "":
 		v.SetString(tag)
-	case k == reflect.Int:
+	case (k == reflect.Int || k == reflect.Int64) && tag != "":
 		switch num, err := strconv.ParseInt(tag, 10, 64); {
 		case err != nil:
 			return err
 		case v.OverflowInt(num):
-			return errors.New(fmt.Sprintf("Value %s overflows int64", tag))
+			return fmt.Errorf("Value %s overflows int64", tag)
 		default:
 			v.SetInt(num)
 		}

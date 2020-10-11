@@ -40,7 +40,7 @@ func WithAWSConfig(region string) dynamodbOpts {
 	}
 }
 
-func  WithAWSSession(sess *types.AWSSession) dynamodbOpts {
+func WithAWSSession(sess *types.AWSSession) dynamodbOpts {
 	return func(d *DynamoDBClient) *DynamoDBClient {
 		d.session = sess
 		return d
@@ -59,7 +59,7 @@ func WithSTSCreds(isProd bool) dynamodbOpts {
 
 func WithConfigEndpoint(endpoint string, isProd bool) dynamodbOpts {
 	return func(d *DynamoDBClient) *DynamoDBClient {
-		if isProd {
+		if !isProd {
 			d.config = d.config.WithEndpoint(endpoint)
 		}
 		return d

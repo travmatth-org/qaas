@@ -33,9 +33,9 @@ resource "aws_dynamodb_table" "qaas_author_table" {
   }
 
   global_secondary_index {
-    name = "QuoteIDIndex"
-    hash_key = "Name"
-    sort_key = "QuoteID"
+    name            = "QuoteIDIndex"
+    hash_key        = "Name"
+    sort_key        = "QuoteID"
     projection_type = "ALL"
   }
 
@@ -62,9 +62,9 @@ resource "aws_dynamodb_table" "qaas_topics_table" {
   }
 
   global_secondary_index {
-    name = "QuoteIDIndex"
-    hash_key = "Name"
-    sort_key = "QuoteID"
+    name            = "QuoteIDIndex"
+    hash_key        = "Name"
+    sort_key        = "QuoteID"
     projection_type = "ALL"
   }
 

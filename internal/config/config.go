@@ -2,10 +2,9 @@ package config
 
 import (
 	"errors"
-	"io/ioutil"
-	"os"
-	"path/filepath"
 
+	"github.com/travmatth-org/qaas/internal/logger"
+	"github.com/travmatth-org/qaas/internal/types"
 	"gopkg.in/yaml.v2"
 )
 
@@ -13,6 +12,7 @@ const (
 	Development = "DEVELOPMENT"
 	Test        = "TEST"
 	Production  = "PRODUCTION"
+	ParseError  = "Parsing Error: All opts must be passed in --flag <val> format"
 )
 
 // Config manages the configuration options of the program.
@@ -52,9 +52,9 @@ type Config struct {
 	}
 }
 
-type ConfigOpt func(c *Config) (*Config, error)
+type opts func(c *Config) (*Config, error)
 
-func New(opts ...ConfigOpt) (*Config, error) {
+func New(opts ...opts) (*Config, error) {
 	var err error
 	c := &Config{}
 	for _, opt := range opts {
@@ -66,46 +66,30 @@ func New(opts ...ConfigOpt) (*Config, error) {
 }
 
 // WithConfigFile locates and parses the config file into the *config struct
-func WithFile(locate func() ([]byte, error)) ConfigOpt {
+func WithConfigFile(locate func() (types.AFSFile, error)) opts {
 	return func(c *Config) (*Config, error) {
-		switch filename, err := locate(); {
-		case err != nil:
+		file, err := locate()
+		if err != nil {
+			logger.Error().Err(err).Msg("Error locating config file")
 			return nil, err
-		default:
-			return c, yaml.Unmarshal(filename, c)
 		}
+		defer file.Close()
+		return c, yaml.NewDecoder(file).Decode(c)
 	}
 }
 
-func WithUpdates(opts []string) ConfigOpt {
+func WithUpdates(opts []string) opts {
 	return func(c *Config) (*Config, error) {
 		n := len(opts)
 		if n%2 != 0 {
-			message := "Parsing Error: All opts must be passed in --flag <val> format"
-			return nil, errors.New(message)
+			return nil, errors.New(ParseError)
 		}
 		m := make(map[string]string, n/2)
-		for i := 0; i <= n; i += 2 {
-			m[opts[i]] = opts[i+1]
+		for i := 0; i < n; i += 2 {
+			m[opts[i][2:]] = opts[i+1]
 		}
 		err := ParseOverrides(c, m)
 		return c, err
-	}
-}
-
-func Locate() ([]byte, error) {
-	dir, err := os.Getwd()
-	if err != nil {
-		return nil, err
-	}
-	cwd := filepath.Join(dir, "httpd.yml")
-	etc := filepath.Join("etc", "qaas", "httpd.yml")
-	if _, err := os.Stat(cwd); !os.IsNotExist(err) {
-		return ioutil.ReadFile(cwd)
-	} else if _, err := os.Stat(etc); !os.IsNotExist(err) {
-		return ioutil.ReadFile(etc)
-	} else {
-		return []byte{}, err
 	}
 }
 

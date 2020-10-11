@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  httpd:
+    image: travmatth/amazonlinux-golang-dev:latest
+    build:
+      context: ../../
+      dockerfile: deploy/docker/dev.dockerfile
+    ports:
+      - "8080:8080"
+      - "2345:2345"
+    cap_add:
+      - "SYS_PTRACE"
+    security_opt:
+      - "seccomp:unconfined"
+    command: >
+      dlv exec /usr/sbin/httpd
+        --headless
+        --log
+        --api-version=2
+        --listen=:2345
+        -- --env DEVELOPMENT --port 8080
+    depends_on:
+      - dynamodb-local
+  dynamodb-local:
+    image: amazon/dynamodb-local
+    container_name: dynamodb-local
+    ports:
+      - "8000:8000"

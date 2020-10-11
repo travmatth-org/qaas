@@ -8,7 +8,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-xray-sdk-go/awsplugins/ec2"
 	"github.com/aws/aws-xray-sdk-go/xray"
-
 )
 
 // API manages client connections with outside services
@@ -59,7 +58,7 @@ func WithEC2(isProd bool) apiOpt {
 
 func WithXray(isProd bool) apiOpt {
 	return func(a *API) (*API, error) {
-		if isProd {
+		if !isProd {
 			return a, nil
 		}
 		return a, xray.Configure(xray.Config{ServiceVersion: "1.2.3"})
@@ -68,7 +67,7 @@ func WithXray(isProd bool) apiOpt {
 
 func WithNewDynamoDBClient(c *config.Config) apiOpt {
 	return func(a *API) (*API, error) {
-		isProd := c.Env == config.Production
+		isProd := config.IsProd(c)
 		a.DynamoDB = db.New(
 			db.WithAWSConfig(a.region),
 			db.WithConfigEndpoint(c.AWS.DynamoDB.Endpoint, isProd),

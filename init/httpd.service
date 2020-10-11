@@ -14,7 +14,7 @@ Restart=on-failure
 RestartSec=10
 
 WorkingDirectory = /srv/
-ExecStart = /usr/sbin/httpd --prod
+ExecStart = /usr/sbin/httpd
 WatchdogSec=10s
 KillSignal = SIGQUIT
 

@@ -2,15 +2,31 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch Server",
+            "name": "Connect to Container Server",
+            "type": "go",
+            "request": "attach",
+            "mode": "remote",
+			"remotePath": "/usr/qaas",
+            "port": 2345,
+            "host": "localhost",
+			"showLog": true,
+			"trace": "log",
+			"logOutput": "rpc"
+        },
+        {
+            "name": "Launch Local Server",
             "type": "go",
             "request": "launch",
             "mode": "debug",
             "program": "${workspaceFolder}/cmd/qaas/main.go",
+            "env": {
+                "QAAS_CONFIG": "${workspaceFolder}/configs/httpd.yml"
+            },
             "args": [
-                "--port", "8080",
-                "--static",
-                "${workspaceFolder}/web"
+                "--env", "DEVELOPMENT",
+                "--ip", "127.0.0.1",
+                "--port", ":8080",
+                "--static", "${workspaceFolder}/web/www/static"
             ]
         }
     ]

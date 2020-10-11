@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"strconv"
 	"syscall"
 	"time"
@@ -21,6 +20,7 @@ import (
 	"github.com/rs/zerolog/hlog"
 	"github.com/travmatth-org/qaas/internal/api"
 	"github.com/travmatth-org/qaas/internal/config"
+	"github.com/travmatth-org/qaas/internal/fs"
 	"github.com/travmatth-org/qaas/internal/logger"
 	"github.com/travmatth-org/qaas/internal/middleware"
 
@@ -48,21 +48,22 @@ type timeout struct {
 type Server struct {
 	*mux.Router
 	*http.Server
-	api *api.API
-	address      string
-	static       map[string]string
-	config       *config.Config
+	api      *api.API
+	fs       *fs.FS
+	address  string
+	static   map[string]string
+	config   *config.Config
 	listener listener
-	channel channel
-	timeout timeout
+	channel  channel
+	timeout  timeout
 }
 
-type serverOpt func(s *Server) (*Server, error)
+type opt func(s *Server) (*Server, error)
 
-func build(s *Server, opts ...serverOpt) (*Server, error) {
+func build(s *Server, opts ...opt) (*Server, error) {
 	var err error
-	for _, opt := range opts {
-		if s, err = opt(s); err != nil {
+	for _, fn := range opts {
+		if s, err = fn(s); err != nil {
 			return nil, err
 		}
 	}
@@ -70,10 +71,10 @@ func build(s *Server, opts ...serverOpt) (*Server, error) {
 }
 
 // New configures and returns a server instance struct.
-func New(c *config.Config, opts ...serverOpt) (*Server, error) {
+func New(c *config.Config, opts ...opt) (*Server, error) {
 	router := mux.NewRouter()
 	s := &Server{
-		Router:  router,
+		Router: router,
 		Server: &http.Server{
 			Addr:         c.Net.IP + c.Net.Port,
 			WriteTimeout: time.Duration(c.Timeout.Write) * time.Second,
@@ -81,10 +82,11 @@ func New(c *config.Config, opts ...serverOpt) (*Server, error) {
 			IdleTimeout:  time.Duration(c.Timeout.Idle) * time.Second,
 			Handler:      router,
 		},
-		api: nil,
+		api:     nil,
+		fs:      nil,
 		address: c.Net.IP + c.Net.Port,
-		static: make(map[string]string, 0),
-		config: c,
+		static:  make(map[string]string),
+		config:  c,
 		channel: channel{
 			signal:  make(chan os.Signal, 1),
 			error:   make(chan error, 1),
@@ -100,35 +102,31 @@ func New(c *config.Config, opts ...serverOpt) (*Server, error) {
 	return build(s, opts...)
 }
 
-func WithStatic(s *Server) (*Server, error) {
-	walk := func(path string, info os.FileInfo, err error) error {
-		if filepath.Ext(path) == ".html" {
-			s.static[info.Name()] = path
-		}
-		return nil
-	}
-	cwd, err := os.Getwd()
-	if err != nil {
-		return nil, err
-	}
-	dir := filepath.Join(cwd, s.config.Net.Static)
-	if err := filepath.Walk(dir, walk); err != nil {
-		return nil, err
-	}
-	return s, err
-}
-
-func WithAPI(a *api.API) serverOpt {
+func WithAPI(a *api.API) opt {
 	return func(s *Server) (*Server, error) {
 		s.api = a
 		return s, nil
 	}
 }
 
-func WithStaticPages(isProd bool) serverOpt {
+func WithFS(fs *fs.FS) opt {
 	return func(s *Server) (*Server, error) {
-		s.HandleFunc("/", s.WrapRoute(s.ServeStatic(s.static["index"]), isProd))
-		s.NotFoundHandler = s.WrapRoute(s.ServeStatic(s.static["404"]), isProd)
+		s.fs = fs
+		return s, nil
+	}
+}
+
+func WithStatic(s *Server) (*Server, error) {
+	if err := s.fs.LoadAssets(s.config.Net.Static); err != nil {
+		return nil, err
+	}
+	return s, nil
+}
+
+func WithStaticPages(isProd bool) opt {
+	return func(s *Server) (*Server, error) {
+		s.HandleFunc("/", s.WrapRoute(s.ServeStatic("index"), isProd))
+		s.NotFoundHandler = s.WrapRoute(s.ServeStatic("404"), isProd)
 		logger.Info().Msg("Registered home and 404 html pages to endpoints")
 		return s, nil
 	}
@@ -140,7 +138,7 @@ func WithStaticPages(isProd bool) serverOpt {
 // and gzipping the response
 func (s *Server) WrapRoute(h http.HandlerFunc, isProd bool) http.HandlerFunc {
 	if !isProd {
-		return h
+		return alice.New(middleware.Log).ThenFunc(h).ServeHTTP
 	}
 	gzippedHandler := gziphandler.GzipHandler(h).ServeHTTP
 	return xray.Handler(
@@ -165,9 +163,12 @@ func (s *Server) OpenListener() (net.Listener, error) {
 		logger.Info().Msg("Activating systemd socket")
 		listeners, err := activation.Listeners()
 		if err != nil {
+			logger.Error().Err(err).Msg("Activating non-systemd socket")
 			return listeners[0], err
 		} else if n := len(listeners); n != 1 {
-			err = fmt.Errorf("Systemd socket error: unexepected number of listeners: %d", n)
+			message := "Systemd socket err: unexepected number of listeners: %d"
+			err = fmt.Errorf(message, n)
+			logger.Error().Err(err).Msg("Activating non-systemd socket")
 		}
 		return listeners[0], err
 	}
@@ -181,17 +182,19 @@ func (s *Server) GetLivenessCheck() (time.Duration, error) {
 	}
 	switch interval, err := daemon.SdWatchdogEnabled(false); {
 	case err != nil:
+		logger.Error().Err(err).Msg("Error initializing liveness checks")
 		return time.Duration(0), err
 	case interval <= 0:
-		message := "Liveness Interval must be greater than 0"
-		return time.Duration(0), errors.New(message)
+		err := errors.New("Liveness Interval must be greater than 0")
+		logger.Error().Err(err).Msg("Error initializing liveness checks")
+		return time.Duration(0), err
 	default:
 		return interval, nil
 	}
 }
 
 // LivenessCheck retrieves home page  to verify the liveness of the server,
-// then notifies the systemd daemon to pass the check, systemd will restart server fails health check, 
+// then notifies the systemd daemon to pass the check, systemd will restart server fails health check,
 func (s *Server) LivenessCheck(interval time.Duration) {
 	for {
 		_, err := http.Get(s.address)
@@ -229,6 +232,8 @@ func (s *Server) start() {
 		} else if dur, err := s.GetLivenessCheck(); err != nil {
 			message := "Not starting readiness checks"
 			logger.Warn().Err(err).Dur("duration", dur).Msg(message)
+			s.channel.error <- err
+			return
 		} else {
 			go s.LivenessCheck(dur)
 		}
