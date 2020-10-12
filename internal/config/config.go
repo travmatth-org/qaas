@@ -2,6 +2,8 @@ package config
 
 import (
 	"errors"
+	"os"
+	"path/filepath"
 
 	"github.com/travmatth-org/qaas/internal/logger"
 	"github.com/travmatth-org/qaas/internal/types"
@@ -9,15 +11,18 @@ import (
 )
 
 const (
+	// Development is string literal for dev environments
 	Development = "DEVELOPMENT"
-	Test        = "TEST"
-	Production  = "PRODUCTION"
-	ParseError  = "Parsing Error: All opts must be passed in --flag <val> format"
+	// Test is string literal for test environments
+	Test = "TEST"
+	// Production is string literal for prod environments
+	Production = "PRODUCTION"
+	parseError = "Parsing Error: All opts must be passed in --flag val format"
 )
 
 // Config manages the configuration options of the program.
 // Program options are configured first attempting to locate and open
-// `httpd.yml`, first in the current working directory then in /etc/qaas
+// `httpd.yml`, first in the path specified by `QAAS_CONFIG` then in /etc/qaas
 // Default values given in config are overriden by env var specified under the
 // `env:"<VAL>"` attribute tags, and then by cli flags specified under the
 // `cli:"<VAL"` attribute tag
@@ -52,25 +57,47 @@ type Config struct {
 	}
 }
 
-type opts func(c *Config) (*Config, error)
+// Opts is the type signature for optional configuration functions
+type Opts func(c *Config) (*Config, error)
 
-func New(opts ...opts) (*Config, error) {
+// New constructs and returns a configuration with the specified options
+func New(opt ...Opts) (*Config, error) {
 	var err error
 	c := &Config{}
-	for _, opt := range opts {
-		if c, err = opt(c); err != nil {
+	for _, fn := range opt {
+		if c, err = fn(c); err != nil {
 			return nil, err
 		}
 	}
 	return c, nil
 }
 
-// WithConfigFile locates and parses the config file into the *config struct
-func WithConfigFile(locate func() (types.AFSFile, error)) opts {
-	return func(c *Config) (*Config, error) {
-		file, err := locate()
+// find path to config, first under QAAS_CONFIG var, then /etc/qaas/httpd.yml
+func choosePath() (string, error) {
+	path := os.Getenv("QAAS_CONFIG")
+	if path == "" {
+		var err error
+		path, err = filepath.Abs(filepath.Join("etc", "qaas", "httpd.yml"))
 		if err != nil {
 			logger.Error().Err(err).Msg("Error locating config file")
+			return "", err
+		}
+	}
+	return path, nil
+}
+
+// WithConfigFile locates and parses the config file into the Config struct.
+// Prefers file path given by `QAAS_CONFIG` environment variable, defaults to
+// /etc/qaas/httpd.yml
+func WithConfigFile(open func(string) (types.AFSFile, error)) Opts {
+	return func(c *Config) (*Config, error) {
+		path, err := choosePath()
+		if err != nil {
+			return nil, err
+		}
+		file, err := open(path)
+		if err != nil {
+			logger.Error().Err(err).Msg("Error opening config file")
 			return nil, err
 		}
 		defer file.Close()
@@ -78,21 +105,24 @@ func WithConfigFile(locate func() (types.AFSFile, error)) opts {
 	}
 }
 
-func WithUpdates(opts []string) opts {
+// WithUpdates accepts the os.Args array and overrides the Config,
+// first with available env vars then with cli options
+func WithUpdates(options []string) Opts {
 	return func(c *Config) (*Config, error) {
-		n := len(opts)
+		n := len(options)
 		if n%2 != 0 {
-			return nil, errors.New(ParseError)
+			return nil, errors.New(parseError)
 		}
 		m := make(map[string]string, n/2)
 		for i := 0; i < n; i += 2 {
-			m[opts[i][2:]] = opts[i+1]
+			m[options[i][2:]] = options[i+1]
 		}
 		err := ParseOverrides(c, m)
 		return c, err
 	}
 }
 
+// IsProd indicates whether server under production configuration
 func IsProd(c *Config) bool {
 	return c.Env == Production
 }

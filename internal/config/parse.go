@@ -9,34 +9,30 @@ import (
 )
 
 const (
-	ENVTag = "env"
-	CLITag = "cli"
+	envTag = "env"
+	cliTag = "cli"
 )
 
+// parser is a helper struct for parsing configuration struct and options
 type parser struct {
 	prefix string
 	opts   map[string]string
 }
 
-func (p *parser) unknownOpts() string {
-	s := ""
-	for key, value := range p.opts {
-		s += key + "=" + value + "\n"
-	}
-	return s
-}
-
+// getTagVal gets tag value from the struct field and returns cli or env val
 func (p *parser) getTagVal(v reflect.StructField) string {
-	if tag, ok := p.opts[v.Tag.Get(CLITag)]; ok {
-		delete(p.opts, v.Tag.Get(CLITag))
+	if tag, ok := p.opts[v.Tag.Get(cliTag)]; ok {
+		delete(p.opts, v.Tag.Get(cliTag))
 		return tag
-	} else if tag = v.Tag.Get(ENVTag); tag == "" {
+	} else if tag = v.Tag.Get(envTag); tag == "" {
 		return ""
 	} else {
 		return os.Getenv(p.prefix + tag)
 	}
 }
 
+// walkFields walks a reflected value, recursing on structs and setting
+// fields with values returned by getTagVal
 func (p *parser) walkFields(v reflect.Value, tag string) error {
 	switch k := v.Kind(); {
 	case k == reflect.Struct:
@@ -62,6 +58,8 @@ func (p *parser) walkFields(v reflect.Value, tag string) error {
 	return nil
 }
 
+// ParseOverrides overrides values in the config struct with
+// environment variables and values passed from os.Args through opts
 func ParseOverrides(c interface{}, opts map[string]string) error {
 	p := &parser{"QAAS_", opts}
 	val := reflect.ValueOf(c).Elem()
@@ -69,7 +67,11 @@ func ParseOverrides(c interface{}, opts map[string]string) error {
 	case err != nil:
 		return err
 	case len(p.opts) > 0:
-		return errors.New("Malformed/Unknown opts: " + p.unknownOpts())
+		message := ""
+		for key, value := range p.opts {
+			message += key + "=" + value + "\n"
+		}
+		return errors.New("Malformed/Unknown opts: " + message)
 	default:
 		return nil
 	}

@@ -17,10 +17,11 @@ type API struct {
 	DynamoDB *db.DynamoDBClient
 }
 
-type apiOpt func(*API) (*API, error)
+// Opts is the type signature for optional functions modifying API
+type Opts func(*API) (*API, error)
 
 // New constructs and returns an api client for client communications
-func New(opts ...apiOpt) (*API, error) {
+func New(opts ...Opts) (*API, error) {
 	var err error
 	a := &API{}
 	for _, opt := range opts {
@@ -31,13 +32,15 @@ func New(opts ...apiOpt) (*API, error) {
 	return a, nil
 }
 
-func WithRegion(r string) apiOpt {
+// WithRegion inserts a given region into API
+func WithRegion(r string) Opts {
 	return func(a *API) (*API, error) {
 		a.region = r
 		return a, nil
 	}
 }
 
+// WithSession inserts a given session into API
 func WithSession(a *API) (*API, error) {
 	sess, err := session.NewSession()
 	if err != nil {
@@ -47,7 +50,8 @@ func WithSession(a *API) (*API, error) {
 	return a, nil
 }
 
-func WithEC2(isProd bool) apiOpt {
+// WithEC2 inits EC2 client if production
+func WithEC2(isProd bool) Opts {
 	return func(a *API) (*API, error) {
 		if isProd {
 			ec2.Init()
@@ -56,7 +60,8 @@ func WithEC2(isProd bool) apiOpt {
 	}
 }
 
-func WithXray(isProd bool) apiOpt {
+// WithXray inits XRay tracing if production
+func WithXray(isProd bool) Opts {
 	return func(a *API) (*API, error) {
 		if !isProd {
 			return a, nil
@@ -65,7 +70,8 @@ func WithXray(isProd bool) apiOpt {
 	}
 }
 
-func WithNewDynamoDBClient(c *config.Config) apiOpt {
+// WithNewDynamoDBClient configures and inserts DynamoDBClient into API
+func WithNewDynamoDBClient(c *config.Config) Opts {
 	return func(a *API) (*API, error) {
 		isProd := config.IsProd(c)
 		a.DynamoDB = db.New(
@@ -81,7 +87,8 @@ func WithNewDynamoDBClient(c *config.Config) apiOpt {
 	}
 }
 
-func WithDynamoDBClient(d *db.DynamoDBClient) apiOpt {
+// WithDynamoDBClient inserts a client into the API, useful for testing
+func WithDynamoDBClient(d *db.DynamoDBClient) Opts {
 	return func(a *API) (*API, error) {
 		a.DynamoDB = d
 		return a, nil

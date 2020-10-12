@@ -12,6 +12,7 @@ import (
 // DBRoleARN injected during build process
 var DBRoleARN string
 
+// DynamoDBClient abstracts & encapsulates interactions with DynamoDB service
 type DynamoDBClient struct {
 	session     *types.AWSSession
 	config      *types.AWSConfig
@@ -23,31 +24,37 @@ type DynamoDBClient struct {
 	AuthorTable string
 }
 
-type dynamodbOpts func(d *DynamoDBClient) *DynamoDBClient
+// Opts is the type signature of functions modifying a DynamoDBClient struct
+type Opts func(d *DynamoDBClient) *DynamoDBClient
 
-func New(opts ...dynamodbOpts) *DynamoDBClient {
+// New creates and configures a new DynamoDBClient with the specified options
+func New(opt ...Opts) *DynamoDBClient {
 	d := &DynamoDBClient{}
-	for _, opt := range opts {
-		d = opt(d)
+	for _, fn := range opt {
+		d = fn(d)
 	}
 	return d
 }
 
-func WithAWSConfig(region string) dynamodbOpts {
+// WithAWSConfig inserts the given region in the aws config
+func WithAWSConfig(region string) Opts {
 	return func(d *DynamoDBClient) *DynamoDBClient {
 		d.config = aws.NewConfig().WithRegion(region)
 		return d
 	}
 }
 
-func WithAWSSession(sess *types.AWSSession) dynamodbOpts {
+// WithAWSSession inserts the given AWS session object into DynamoDBClient
+func WithAWSSession(sess *types.AWSSession) Opts {
 	return func(d *DynamoDBClient) *DynamoDBClient {
 		d.session = sess
 		return d
 	}
 }
 
-func WithSTSCreds(isProd bool) dynamodbOpts {
+// WithSTSCreds configures the AWS config with STS creds using
+// the injected role ARN, if running in production
+func WithSTSCreds(isProd bool) Opts {
 	return func(d *DynamoDBClient) *DynamoDBClient {
 		if isProd {
 			creds := stscreds.NewCredentials(d.session, DBRoleARN)
@@ -57,7 +64,8 @@ func WithSTSCreds(isProd bool) dynamodbOpts {
 	}
 }
 
-func WithConfigEndpoint(endpoint string, isProd bool) dynamodbOpts {
+// WithConfigEndpoint configures the DynamoDB endpoint, if not running in prod
+func WithConfigEndpoint(endpoint string, isProd bool) Opts {
 	return func(d *DynamoDBClient) *DynamoDBClient {
 		if !isProd {
 			d.config = d.config.WithEndpoint(endpoint)
@@ -66,42 +74,48 @@ func WithConfigEndpoint(endpoint string, isProd bool) dynamodbOpts {
 	}
 }
 
-func NewClient() dynamodbOpts {
+// NewClient creates a new DynamoDB client using the provided session and config
+func NewClient() Opts {
 	return func(d *DynamoDBClient) *DynamoDBClient {
 		d.client = dynamodb.New(d.session, d.config)
 		return d
 	}
 }
 
-func MockClient(m *types.AWSDynamoDB) dynamodbOpts {
+// WithClient inserts a dynamodb client into DynamoDBClient, useful in testing
+func WithClient(m *types.AWSDynamoDB) Opts {
 	return func(d *DynamoDBClient) *DynamoDBClient {
 		d.client = m
 		return d
 	}
 }
 
-func WithPaginationLimit(limit int64) dynamodbOpts {
+// WithPaginationLimit inserts the given pagination limit into DynamoDBClient
+func WithPaginationLimit(limit int64) Opts {
 	return func(d *DynamoDBClient) *DynamoDBClient {
 		d.limit = limit
 		return d
 	}
 }
 
-func WithQuoteTable(t string) dynamodbOpts {
+// WithQuoteTable inserts the name of the QuoteTable into DynamoDBClient
+func WithQuoteTable(t string) Opts {
 	return func(d *DynamoDBClient) *DynamoDBClient {
 		d.QuoteTable = t
 		return d
 	}
 }
 
-func WithTopicTable(t string) dynamodbOpts {
+// WithTopicTable inserts the name of the TopicTable into DynamoDBClient
+func WithTopicTable(t string) Opts {
 	return func(d *DynamoDBClient) *DynamoDBClient {
 		d.TopicTable = t
 		return d
 	}
 }
 
-func WithAuthorTable(t string) dynamodbOpts {
+// WithAuthorTable inserts the name of the AuthorTable into DynamoDBClient
+func WithAuthorTable(t string) Opts {
 	return func(d *DynamoDBClient) *DynamoDBClient {
 		d.AuthorTable = t
 		return d

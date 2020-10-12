@@ -9,12 +9,15 @@ import (
 	"github.com/travmatth-org/qaas/internal/logger"
 )
 
+// Main configures and starts a server with
+// specified configuration, file system, and aws service clients.
+// Returns 1 on server error, or 0 on graceful shutdown.
 func Main() int {
 	// init filesystem
 	afs := fs.New().WithCachedFs()
 	// Load config options
 	c, err := config.New(
-		config.WithConfigFile(afs.Locate("QAAS_CONFIG")),
+		config.WithConfigFile(afs.Open),
 		config.WithUpdates(os.Args[1:]))
 	if err != nil {
 		logger.Error().Msg("Error configuring server")

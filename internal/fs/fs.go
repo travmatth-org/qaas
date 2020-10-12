@@ -12,24 +12,31 @@ import (
 )
 
 const (
-	ReadAllWriteUser     os.FileMode = 0644
+	// ReadAllWriteUser gives specified permissions
+	ReadAllWriteUser os.FileMode = 0644
+	// ReadExecAllWriteUser gives specified permissions
 	ReadExecAllWriteUser os.FileMode = 0755
 )
 
+// FS abstracts over the filesystem providing read/write access to
+// an in memory filesystem, or a cached os file system
 type FS struct {
 	client *types.AFS
 	files  map[string]types.AFSFile
 }
 
+// New returns a new FS
 func New() *FS {
 	return &FS{nil, make(map[string]types.AFSFile)}
 }
 
+// WithMemFs creates an underlying in memory filesystem
 func (fs *FS) WithMemFs() *FS {
 	fs.client = &afero.Afero{Fs: afero.NewMemMapFs()}
 	return fs
 }
 
+// WithCachedFs creates a cached os file system
 func (fs *FS) WithCachedFs() *FS {
 	base := afero.NewOsFs()
 	layer := afero.NewMemMapFs()
@@ -40,11 +47,12 @@ func (fs *FS) WithCachedFs() *FS {
 	return fs
 }
 
-func (fs *FS) Open(name, path string) error {
+// opens specified file in filesystem, locally caches reader under name
+func (fs *FS) cache(name, path string) error {
 	if _, ok := fs.files[name]; ok {
 		return nil
 	} else if val, err := fs.client.Open(path); err != nil {
-		logger.Error().Str("file", path).Str("name", name).Err(err).Msg("Error opening asset in directory")
+		logger.Error().Err(err).Str("path", path).Msg("Error opening asset")
 		return err
 	} else {
 		fs.files[name] = val
@@ -52,6 +60,7 @@ func (fs *FS) Open(name, path string) error {
 	}
 }
 
+// LoadAssets walks the given directory, opening and caching assets
 func (fs *FS) LoadAssets(dir string) error {
 	walk := func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -59,7 +68,7 @@ func (fs *FS) LoadAssets(dir string) error {
 		} else if filepath.Ext(path) == ".html" {
 			name := info.Name()
 			name = strings.TrimSuffix(name, filepath.Ext(name))
-			if err := fs.Open(name, path); err != nil {
+			if err := fs.cache(name, path); err != nil {
 				fs.CloseAll()
 				return err
 			}
@@ -70,23 +79,17 @@ func (fs *FS) LoadAssets(dir string) error {
 	return fs.client.Walk(dir, walk)
 }
 
+// Use returns the reader of a file under the specified key
 func (fs *FS) Use(key string) types.AFSFile {
 	return fs.files[key]
 }
 
-func (fs *FS) Locate(env string) func() (types.AFSFile, error) {
-	return func() (types.AFSFile, error) {
-		if path := os.Getenv(env); path != "" {
-			return fs.client.Open(path)
-		}
-		path, err := filepath.Abs(filepath.Join("etc", "qaas", "httpd.yml"))
-		if err != nil {
-			return nil, err
-		}
-		return fs.client.Open(path)
-	}
+// Open a reader for the file at the specified path on the file system
+func (fs *FS) Open(path string) (types.AFSFile, error) {
+	return fs.client.Open(path)
 }
 
+// CloseAll closes all cached files
 func (fs *FS) CloseAll() {
 	for _, file := range fs.files {
 		if err := file.Close(); err != nil {

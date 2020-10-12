@@ -31,7 +31,7 @@ aws:
 
 func TestNew(t *testing.T) {
 	for _, tt := range []struct {
-		f   opts
+		f   Opts
 		err error
 	}{{
 		func(c *Config) (*Config, error) {
@@ -62,7 +62,7 @@ func TestWithConfigFile(t *testing.T) {
 	os.Setenv(env, location)
 	defer os.Unsetenv(env)
 
-	c, err := WithConfigFile(fileSystem.Locate("QAAS_CONFIG"))(&Config{})
+	c, err := WithConfigFile(fileSystem.Open)(&Config{})
 	if err != nil || c.Env != Production {
 		t.Fatalf("Error unmarshaling file to config struct")
 	}

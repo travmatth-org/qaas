@@ -32,19 +32,21 @@ type listener struct {
 }
 
 type channel struct {
-	signal  chan os.Signal
-	error   chan error
+	// monitor incoming os signals
+	signal chan os.Signal
+	// monitor outgoing errors thrown by server
+	error chan error
+	// monitor server startup
 	started chan struct{}
 }
 
 type timeout struct {
+	// duration to wait for server to gracefully shutdown
 	stop time.Duration
 }
 
-// Server represents the running server with embedded
-// *http.Server, *mux.Router, zerolog.Logger instances
-// manages the configurations, starting, stopping and routing
-// of HTTP server instance
+// Server w/ embedded *http.Server, *mux.Router, zerolog.Logger instances.
+// Manages configurations, starting, stopping and routing of server instances
 type Server struct {
 	*mux.Router
 	*http.Server
@@ -58,9 +60,11 @@ type Server struct {
 	timeout  timeout
 }
 
-type opt func(s *Server) (*Server, error)
+// Opt is the signature of server configuration functions
+type Opt func(s *Server) (*Server, error)
 
-func build(s *Server, opts ...opt) (*Server, error) {
+// helper func to evaluate server options
+func build(s *Server, opts ...Opt) (*Server, error) {
 	var err error
 	for _, fn := range opts {
 		if s, err = fn(s); err != nil {
@@ -70,8 +74,8 @@ func build(s *Server, opts ...opt) (*Server, error) {
 	return s, nil
 }
 
-// New configures and returns a server instance struct.
-func New(c *config.Config, opts ...opt) (*Server, error) {
+// New configures and returns a server instance struct with the specified opts
+func New(c *config.Config, opts ...Opt) (*Server, error) {
 	router := mux.NewRouter()
 	s := &Server{
 		Router: router,
@@ -102,20 +106,23 @@ func New(c *config.Config, opts ...opt) (*Server, error) {
 	return build(s, opts...)
 }
 
-func WithAPI(a *api.API) opt {
+// WithAPI inserts the given api client into the server
+func WithAPI(a *api.API) Opt {
 	return func(s *Server) (*Server, error) {
 		s.api = a
 		return s, nil
 	}
 }
 
-func WithFS(fs *fs.FS) opt {
+// WithFS inserts the given file system client into the server
+func WithFS(fs *fs.FS) Opt {
 	return func(s *Server) (*Server, error) {
 		s.fs = fs
 		return s, nil
 	}
 }
 
+// WithStatic loads the given static assets into the server
 func WithStatic(s *Server) (*Server, error) {
 	if err := s.fs.LoadAssets(s.config.Net.Static); err != nil {
 		return nil, err
@@ -123,7 +130,8 @@ func WithStatic(s *Server) (*Server, error) {
 	return s, nil
 }
 
-func WithStaticPages(isProd bool) opt {
+// WithStaticPages loads staic pages as HTTP endpoints
+func WithStaticPages(isProd bool) Opt {
 	return func(s *Server) (*Server, error) {
 		s.HandleFunc("/", s.WrapRoute(s.ServeStatic("index"), isProd))
 		s.NotFoundHandler = s.WrapRoute(s.ServeStatic("404"), isProd)
@@ -137,24 +145,25 @@ func WithStaticPages(isProd bool) opt {
 // with request details into the context, and error recovery middleware,
 // and gzipping the response
 func (s *Server) WrapRoute(h http.HandlerFunc, isProd bool) http.HandlerFunc {
-	if !isProd {
-		return alice.New(middleware.Log).ThenFunc(h).ServeHTTP
+	handler := alice.New(
+		s.RecoverHandler,
+		hlog.NewHandler(*logger.GetLogger()),
+		hlog.RequestIDHandler("req_id", "Request-Id"),
+		hlog.RemoteAddrHandler("ip"),
+		hlog.RequestHandler("dest"),
+		hlog.RefererHandler("referer"),
+		gziphandler.GzipHandler,
+		middleware.Log,
+	).ThenFunc(h)
+	if isProd {
+		namer := xray.NewFixedSegmentNamer("qaas-httpd")
+		return xray.Handler(namer, handler).ServeHTTP
 	}
-	gzippedHandler := gziphandler.GzipHandler(h).ServeHTTP
-	return xray.Handler(
-		xray.NewFixedSegmentNamer("qaas-httpd"),
-		alice.New(
-			s.RecoverHandler,
-			hlog.NewHandler(*logger.GetLogger()),
-			hlog.RequestIDHandler("req_id", "Request-Id"),
-			hlog.RemoteAddrHandler("ip"),
-			hlog.RequestHandler("dest"),
-			hlog.RefererHandler("referer"),
-			middleware.Log,
-		).ThenFunc(gzippedHandler)).ServeHTTP
+	return handler.ServeHTTP
 }
 
 // OpenListener returns a listener for the server to receive traffic on, or err
+// Will prefer using a systemd activated socket if `LISTEN_PID` defined in env
 func (s *Server) OpenListener() (net.Listener, error) {
 	// when systemd starts a process using socket-based activation it sets
 	// `LISTEN_PID` & `LISTEN_FDS`. To check if socket based activation is
@@ -163,11 +172,10 @@ func (s *Server) OpenListener() (net.Listener, error) {
 		logger.Info().Msg("Activating systemd socket")
 		listeners, err := activation.Listeners()
 		if err != nil {
-			logger.Error().Err(err).Msg("Activating non-systemd socket")
+			logger.Error().Err(err).Msg("Error Activating systemd socket")
 			return listeners[0], err
 		} else if n := len(listeners); n != 1 {
-			message := "Systemd socket err: unexepected number of listeners: %d"
-			err = fmt.Errorf(message, n)
+			err = fmt.Errorf("Systemd socket err: too many listeners: %d", n)
 			logger.Error().Err(err).Msg("Activating non-systemd socket")
 		}
 		return listeners[0], err
@@ -176,6 +184,9 @@ func (s *Server) OpenListener() (net.Listener, error) {
 	return net.Listen("tcp", s.config.Net.Port)
 }
 
+// GetLivenessCheck retrieves the liveness check interval from systemd
+// if running in production mode (i.e., with systemd), else the interval
+// specified in the configuration
 func (s *Server) GetLivenessCheck() (time.Duration, error) {
 	if s.config.Env == config.Production {
 		return time.Duration(s.config.Net.Liveness) * time.Second, nil
@@ -194,7 +205,8 @@ func (s *Server) GetLivenessCheck() (time.Duration, error) {
 }
 
 // LivenessCheck retrieves home page  to verify the liveness of the server,
-// then notifies the systemd daemon to pass the check, systemd will restart server fails health check,
+// then notifies the systemd daemon to pass the check.
+// systemd will restart server on failed health check
 func (s *Server) LivenessCheck(interval time.Duration) {
 	for {
 		_, err := http.Get(s.address)
@@ -230,8 +242,9 @@ func (s *Server) start() {
 			message := "Error notifying systemd of readiness"
 			logger.Error().Err(err).Msg(message)
 		} else if dur, err := s.GetLivenessCheck(); err != nil {
-			message := "Not starting readiness checks"
-			logger.Warn().Err(err).Dur("duration", dur).Msg(message)
+			logger.Error().Err(err).
+				Dur("duration", dur).
+				Msg("Not starting readiness checks")
 			s.channel.error <- err
 			return
 		} else {
@@ -250,7 +263,7 @@ func (s *Server) AcceptConnections() error {
 
 	switch ln, err := s.OpenListener(); {
 	case err != nil:
-		logger.Error().Err(err).Msg("Error initializing listener for http server")
+		logger.Error().Err(err).Msg("Error initializing listener")
 		return err
 	default:
 		s.listener.http = ln
