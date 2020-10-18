@@ -4,7 +4,7 @@ net:
   ip: 0.0.0.0
   port: :80
   liveness: 10
-timeouts:
+timeout:
   read: 5
   write: 5
   stop: 5
@@ -14,7 +14,7 @@ aws:
   dynamodb:
     endpoint: http://localhost:8000
     pagination_limit: 5
-    tables:
-      quote: qaas-quote-table
-      author: qaas-author-table
-      topic: qaas-topic-table
+    table:
+      quote: "qaas-quote-table"
+      author: "qaas-author-table"
+      topic: "qaas-topic-table"

@@ -1,4 +1,4 @@
-package server
+package handlers
 
 import (
 	"net/http"
@@ -6,9 +6,8 @@ import (
 	"github.com/travmatth-org/qaas/internal/logger"
 )
 
-// RecoverHandler catches panics in downstream handlers,
-// sends an error to gracefully alert the client
-func (s *Server) RecoverHandler(next http.Handler) http.Handler {
+// Recover catches panics in downstream handlers, sends err to alert client
+func Recover(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if err := recover(); err != nil {

@@ -49,10 +49,10 @@ resource "aws_dynamodb_table" "qaas_topics_table" {
   billing_mode   = "PAY_PER_REQUEST"
   read_capacity  = 1
   write_capacity = 1
-  hash_key       = "Topic"
+  hash_key       = "Name"
 
   attribute {
-    name = "Topic"
+    name = "Name"
     type = "S"
   }
 

@@ -5,7 +5,7 @@ import (
 )
 
 // internal/config/config.go
-// internal/fs/fs.go
+// internal/afs/afs.go
 
 // AFS ...
 type AFS = afero.Afero

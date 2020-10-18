@@ -5,16 +5,16 @@ import (
 	"os"
 	"testing"
 
-	"github.com/travmatth-org/qaas/internal/fs"
+	"github.com/travmatth-org/qaas/internal/afs"
 )
 
 var config = []byte(`env: PRODUCTION
 net:
-  static: /web/www/static
+  static: /srv/web/www/static
   ip: 0.0.0.0
   port: :80
   liveness: 10
-timeouts:
+timeout:
   read: 5
   write: 5
   stop: 5
@@ -24,10 +24,10 @@ aws:
   dynamodb:
     endpoint: http://localhost:8000
     pagination_limit: 5
-    tables:
-      quote: qaas-quote-table
-      author: qaas-author-table
-      topic: qaas-topic-table`)
+    table:
+      quote: "qaas-quote-table"
+      author: "qaas-author-table"
+      topic: "qaas-topic-table"`)
 
 func TestNew(t *testing.T) {
 	for _, tt := range []struct {
@@ -53,9 +53,12 @@ func TestNew(t *testing.T) {
 }
 
 func TestWithConfigFile(t *testing.T) {
-	env, location := "QAAS_CONFIG", "/etc/qaas/httpd.yml"
-	fileSystem := fs.New().WithMemFs()
-	err := fileSystem.Write(location, config, fs.ReadAllWriteUser)
+	var (
+		env        = "QAAS_CONFIG"
+		location   = "/etc/qaas/httpd.yml"
+		fileSystem = afs.New().WithMemFs()
+		err        = fileSystem.Write(location, config, afs.ReadAllWriteUser)
+	)
 	if err != nil {
 		t.Errorf("Error configuring file system: %+v", err)
 	}

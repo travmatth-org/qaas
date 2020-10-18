@@ -3,9 +3,9 @@ package server
 import (
 	"os"
 
+	"github.com/travmatth-org/qaas/internal/afs"
 	"github.com/travmatth-org/qaas/internal/api"
 	"github.com/travmatth-org/qaas/internal/config"
-	"github.com/travmatth-org/qaas/internal/fs"
 	"github.com/travmatth-org/qaas/internal/logger"
 )
 
@@ -14,10 +14,10 @@ import (
 // Returns 1 on server error, or 0 on graceful shutdown.
 func Main() int {
 	// init filesystem
-	afs := fs.New().WithCachedFs()
+	fs := afs.New().WithCachedFs()
 	// Load config options
 	c, err := config.New(
-		config.WithConfigFile(afs.Open),
+		config.WithConfigFile(fs.Open),
 		config.WithUpdates(os.Args[1:]))
 	if err != nil {
 		logger.Error().Msg("Error configuring server")
@@ -30,7 +30,7 @@ func Main() int {
 		api.WithSession,
 		api.WithEC2(config.IsProd(c)),
 		api.WithXray(config.IsProd(c)),
-		api.WithNewDynamoDBClient(c))
+		api.WithNewDDB(c))
 	if err != nil {
 		logger.Error().Msg("Error configuring API")
 		return 1
@@ -38,7 +38,7 @@ func Main() int {
 
 	// Create Server
 	s, err := New(c,
-		WithFS(afs),
+		WithFS(fs),
 		WithStatic,
 		WithAPI(a),
 		WithStaticPages(config.IsProd(c)))
@@ -46,7 +46,7 @@ func Main() int {
 		logger.Error().Msg("Error initializing Server")
 		return 1
 	}
-	defer afs.CloseAll()
+	defer fs.CloseAll()
 
 	// Listen for incoming connections
 	if err := s.AcceptConnections(); err != nil {

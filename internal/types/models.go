@@ -1,15 +1,18 @@
 package types
 
 import (
+	"encoding/json"
+	"io"
+
 	"github.com/google/uuid"
 )
 
 // Quote models an individual quote by an author, related to a set of topics
 type Quote struct {
-	ID     string   `json:"id"`
-	Text   string   `json:"text" dynamoav:",omitempty"`
-	Author string   `json:"author" dynamoav:",omitempty"`
-	Topics []string `json:"topics" dynamoav:",stringset,omitempty"`
+	ID     string   `validate:"max=0"`
+	Text   string   `validate:"min=5,max=100"`
+	Author string   `validate:"min=5,max=20,regexp=^[a-zA-Z ]*$"`
+	Topics []string `validate:"max=5,topics" dynamodbav:",stringset"`
 }
 
 // NewQuote returns a new Quote
@@ -17,9 +20,26 @@ func NewQuote() *Quote {
 	return &Quote{}
 }
 
-// WithID inserts a new UUID into a Quote
-func (q *Quote) WithID() *Quote {
+// ValidateQuoteFrom creates a new quote from the given reader
+func ValidateQuoteFrom(reader io.Reader) (*Quote, error) {
+	var quote Quote
+	if err := json.NewDecoder(reader).Decode(&quote); err != nil {
+		return nil, err
+	} else if err = ValidateStruct(&quote); err != nil {
+		return nil, err
+	}
+	return &quote, nil
+}
+
+// NewID inserts a new UUID into a Quote
+func (q *Quote) NewID() *Quote {
 	q.ID = uuid.New().String()
+	return q
+}
+
+// WithID inserts the given ID into a Quote
+func (q *Quote) WithID(id string) *Quote {
+	q.ID = id
 	return q
 }
 
@@ -41,48 +61,38 @@ func (q *Quote) WithTopics(t []string) *Quote {
 	return q
 }
 
-// Author models an individual Author and their attributed quote's ID
-type Author struct {
-	Name    string `json:"name"`
-	QuoteID string `json:"quote_id"`
+// Record models a piece of quote metadata and its relation to quotes
+type Record struct {
+	Name    string `validate:"min=3,max=20,regexp=^[a-zA-Z0-9 ]*$" json:"Name"`
+	QuoteID string `validate:"min=3,max=20,regexp=^[a-zA-Z0-9 ]*$" json:"QuoteID"`
 }
 
-// NewAuthor returns a new Author
-func NewAuthor() *Author {
-	return &Author{}
+// NewRecord returns a new Record
+func NewRecord() *Record {
+	return &Record{}
 }
 
-// WithQuoteID inserts a new quote id into the Author
-func (a *Author) WithQuoteID(id string) *Author {
-	a.QuoteID = id
-	return a
+// RecordsFromQuote creates a quotes record metadata from the given quote
+func RecordsFromQuote(q *Quote) (*Record, []*Record) {
+	var (
+		author = NewRecord().WithName(q.Author).WithQuoteID(q.ID)
+		topics = []*Record{}
+	)
+	for _, topic := range q.Topics {
+		t := NewRecord().WithName(topic).WithQuoteID(q.ID)
+		topics = append(topics, t)
+	}
+	return author, topics
 }
 
-// WithName inserts a given name into the Author
-func (a *Author) WithName(name string) *Author {
-	a.Name = name
-	return a
+// WithQuoteID inserts a new quote id into the Record
+func (r *Record) WithQuoteID(id string) *Record {
+	r.QuoteID = id
+	return r
 }
 
-// Topic models a given topic, and the quote associated with it
-type Topic struct {
-	Name    string `json:"name"`
-	QuoteID string `json:"quote_id"`
-}
-
-// NewTopic return a new Topic
-func NewTopic() *Topic {
-	return &Topic{}
-}
-
-// WithQuoteID inserts a given quote id into the Topic
-func (t *Topic) WithQuoteID(id string) *Topic {
-	t.QuoteID = id
-	return t
-}
-
-// WithName inserts a given name into the Topic
-func (t *Topic) WithName(name string) *Topic {
-	t.Name = name
-	return t
+// WithName inserts a given name into the Record
+func (r *Record) WithName(name string) *Record {
+	r.Name = name
+	return r
 }

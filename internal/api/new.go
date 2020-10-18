@@ -1,7 +1,7 @@
 package api
 
 import (
-	db "github.com/travmatth-org/qaas/internal/api/dynamodb"
+	"github.com/travmatth-org/qaas/internal/api/ddb"
 	"github.com/travmatth-org/qaas/internal/config"
 	"github.com/travmatth-org/qaas/internal/types"
 
@@ -12,9 +12,9 @@ import (
 
 // API manages client connections with outside services
 type API struct {
-	session  *types.AWSSession
-	region   string
-	DynamoDB *db.DynamoDBClient
+	session *types.AWSSession
+	region  string
+	DDB     *ddb.DDB
 }
 
 // Opts is the type signature for optional functions modifying API
@@ -22,14 +22,16 @@ type Opts func(*API) (*API, error)
 
 // New constructs and returns an api client for client communications
 func New(opts ...Opts) (*API, error) {
-	var err error
-	a := &API{}
+	var (
+		err error = nil
+		a         = &API{}
+	)
 	for _, opt := range opts {
 		if a, err = opt(a); err != nil {
 			return nil, err
 		}
 	}
-	return a, nil
+	return a, err
 }
 
 // WithRegion inserts a given region into API
@@ -70,27 +72,33 @@ func WithXray(isProd bool) Opts {
 	}
 }
 
-// WithNewDynamoDBClient configures and inserts DynamoDBClient into API
-func WithNewDynamoDBClient(c *config.Config) Opts {
+// WithNewDDB configures and inserts DDB into API
+func WithNewDDB(c *config.Config) Opts {
 	return func(a *API) (*API, error) {
-		isProd := config.IsProd(c)
-		a.DynamoDB = db.New(
-			db.WithAWSConfig(a.region),
-			db.WithConfigEndpoint(c.AWS.DynamoDB.Endpoint, isProd),
-			db.WithSTSCreds(isProd),
-			db.WithAWSSession(a.session),
-			db.WithPaginationLimit(c.AWS.DynamoDB.PaginationLimit),
-			db.WithQuoteTable(c.AWS.DynamoDB.Table.Quote),
-			db.WithTopicTable(c.AWS.DynamoDB.Table.Topic),
-			db.WithAuthorTable(c.AWS.DynamoDB.Table.Author))
+		var (
+			isProd  = config.IsProd(c)
+			db, err = ddb.New(
+				ddb.WithAWSConfig(a.region),
+				ddb.WithConfigEndpoint(c.AWS.DynamoDB.Endpoint, isProd),
+				ddb.WithSTSCreds(isProd),
+				ddb.WithAWSSession(a.session),
+				ddb.WithPaginationLimit(c.AWS.DynamoDB.PaginationLimit),
+				ddb.WithTables(c.AWS.DynamoDB.Table),
+				ddb.NewClient,
+			)
+		)
+		if err != nil {
+			return nil, err
+		}
+		a.DDB = db
 		return a, nil
 	}
 }
 
-// WithDynamoDBClient inserts a client into the API, useful for testing
-func WithDynamoDBClient(d *db.DynamoDBClient) Opts {
+// WithDDB inserts a client into the API, useful for testing
+func WithDDB(d *ddb.DDB) Opts {
 	return func(a *API) (*API, error) {
-		a.DynamoDB = d
+		a.DDB = d
 		return a, nil
 	}
 }

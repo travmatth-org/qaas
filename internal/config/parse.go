@@ -61,8 +61,10 @@ func (p *parser) walkFields(v reflect.Value, tag string) error {
 // ParseOverrides overrides values in the config struct with
 // environment variables and values passed from os.Args through opts
 func ParseOverrides(c interface{}, opts map[string]string) error {
-	p := &parser{"QAAS_", opts}
-	val := reflect.ValueOf(c).Elem()
+	var (
+		p   = &parser{"QAAS_", opts}
+		val = reflect.ValueOf(c).Elem()
+	)
 	switch err := p.walkFields(val, ""); {
 	case err != nil:
 		return err

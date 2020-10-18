@@ -20,6 +20,13 @@ const (
 	parseError = "Parsing Error: All opts must be passed in --flag val format"
 )
 
+// Tables represent the DynamoDB tables of the QAAS service
+type Tables struct {
+	Quote  string `yaml:"quote" env:"QUOTE_TABLE" cli:"quote-table"`
+	Author string `yaml:"author" env:"AUTHOR_TABLE" cli:"author-table"`
+	Topic  string `yaml:"topic" env:"TOPIC_TABLE" cli:"topic-table"`
+}
+
 // Config manages the configuration options of the program.
 // Program options are configured first attempting to locate and open
 // `httpd.yml`, first in the path specified by `QAAS_CONFIG` then in /etc/qaas
@@ -46,13 +53,9 @@ type Config struct {
 	AWS struct {
 		Region   string `yaml:"region" env:"AWS_REGION" cli:"region"`
 		DynamoDB struct {
-			Endpoint        string `yaml:"dev_db_endpoint" env:"DB_ENDPOINT" cli:"db-endpoint"`
+			Endpoint        string `yaml:"endpoint" env:"DB_ENDPOINT" cli:"db-endpoint"`
 			PaginationLimit int64  `yaml:"pagination_limit" env:"PAGINATION" cli:"db-pagination"`
-			Table           struct {
-				Quote  string `yaml:"quote" env:"QUOTE_TABLE" cli:"quote-table"`
-				Author string `yaml:"author" env:"AUTHOR_TABLE" cli:"author-table"`
-				Topic  string `yaml:"topic" env:"TOPIC_TABLE" cli:"topic-table"`
-			}
+			Table           Tables
 		}
 	}
 }
@@ -62,28 +65,31 @@ type Opts func(c *Config) (*Config, error)
 
 // New constructs and returns a configuration with the specified options
 func New(opt ...Opts) (*Config, error) {
-	var err error
-	c := &Config{}
+	var (
+		err error = nil
+		c         = &Config{}
+	)
 	for _, fn := range opt {
 		if c, err = fn(c); err != nil {
 			return nil, err
 		}
 	}
-	return c, nil
+	return c, err
 }
 
 // find path to config, first under QAAS_CONFIG var, then /etc/qaas/httpd.yml
 func choosePath() (string, error) {
-	path := os.Getenv("QAAS_CONFIG")
+	var (
+		err  error = nil
+		path       = os.Getenv("QAAS_CONFIG")
+	)
 	if path == "" {
-		var err error
 		path, err = filepath.Abs(filepath.Join("etc", "qaas", "httpd.yml"))
 		if err != nil {
 			logger.Error().Err(err).Msg("Error locating config file")
-			return "", err
 		}
 	}
-	return path, nil
+	return path, err
 }
 
 // WithConfigFile locates and parses the config file into the Config struct.
@@ -101,7 +107,13 @@ func WithConfigFile(open func(string) (types.AFSFile, error)) Opts {
 			return nil, err
 		}
 		defer file.Close()
-		return c, yaml.NewDecoder(file).Decode(c)
+		d := yaml.NewDecoder(file)
+		d.SetStrict(true)
+		err = d.Decode(c)
+		if err != nil {
+			logger.Error().Err(err).Msg("Error creating config")
+		}
+		return c, err
 	}
 }
 

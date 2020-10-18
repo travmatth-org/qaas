@@ -18,7 +18,7 @@
             "type": "go",
             "request": "launch",
             "mode": "debug",
-            "program": "${workspaceFolder}/cmd/qaas/main.go",
+            "program": "${workspaceFolder}/cmd/httpd/main.go",
             "env": {
                 "QAAS_CONFIG": "${workspaceFolder}/configs/httpd.yml"
             },
@@ -27,6 +27,22 @@
                 "--ip", "127.0.0.1",
                 "--port", ":8080",
                 "--static", "${workspaceFolder}/web/www/static"
+            ]
+        },
+        {
+            "name": "Launch Local DynamoDB Driver",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/cmd/db/main.go",
+            "env": {
+                "QAAS_CONFIG": "${workspaceFolder}/configs/httpd.yml"
+            },
+            "args": [
+                "--env", "DEVELOPMENT",
+                "--ip", "127.0.0.1",
+                "--port", ":8080",
+                "--static", "${workspaceFolder}/web/www/static",
             ]
         }
     ]

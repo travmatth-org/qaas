@@ -1,7 +1,9 @@
 # make vars
 
 APPLICATION		:= dist/httpd
-MAIN			:= cmd/qaas/main.go
+TEST_APP		:= dist/test
+MAIN			:= cmd/httpd/main.go
+DB_MAIN			:= cmd/db/main.go
 GO_LINUX_BUILD	:= GOOS=linux GOARCH=amd64
 GO_NO_OPTS		:= -gcflags="all=-N -l"
 COVERAGE_OUT	:= coverage.out
@@ -17,10 +19,13 @@ build: clean $(MAIN)
 build.linux: clean $(MAIN)
 	@$(GO_LINUX_BUILD) go build -o $(APPLICATION) $(MAIN)
 
-build.test:
+build.noopt:
 	@go build $(GO_NO_OPTS) -o $(APPLICATION) $(MAIN)
 
-build.test.all: $(MAIN) build.assets build.test
+build.db.main:
+	@go build $(GO_NO_OPTS) -o $(APPLICATION) $(DB_MAIN)
+
+build.test.all: $(MAIN) build.assets build.noopt
 
 build.ami: build.all
 	packer build deploy/packer/packer.json
@@ -39,7 +44,14 @@ build.assets:
 
 build.all: build.linux build.assets
 
-run: build.test
+run: build.noopt
+	@QAAS_CONFIG=${CURDIR}/configs/httpd.yml ./$(APPLICATION) \
+		--env "DEVELOPMENT" \
+		--ip "127.0.0.1" \
+		--port ":8080" \
+		--static "${CURDIR}/web/www/static"
+
+run.db: build.db.main
 	@QAAS_CONFIG=${CURDIR}/configs/httpd.yml ./$(APPLICATION) \
 		--env "DEVELOPMENT" \
 		--ip "127.0.0.1" \

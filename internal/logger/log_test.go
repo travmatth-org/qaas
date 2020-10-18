@@ -10,6 +10,7 @@ import (
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/hlog"
+	"github.com/travmatth-org/qaas/internal/types"
 )
 
 type output struct {
@@ -29,10 +30,12 @@ func reset() *bytes.Buffer {
 }
 
 func TestSetLogger(t *testing.T) {
-	var want bytes.Buffer
-	var out output
+	var (
+		want = bytes.Buffer{}
+		out  = output{}
+		log  = zerolog.New(&want).With().Logger()
+	)
 
-	log := zerolog.New(&want).With().Logger()
 	SetLogger(&log)
 	log.Error().Bool("test", true).Msg("Succeeded")
 
@@ -59,7 +62,7 @@ func TestGetLogger(t *testing.T) {
 func TestLevelLogs(t *testing.T) {
 	tests := []struct {
 		name  string
-		log   func() *zerolog.Event
+		log   func() *types.ZLEvent
 		level string
 	}{
 		{"TestError", Error, "error"},
@@ -103,10 +106,11 @@ func TestLogsFromRequest(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var out output
-
-			// reset log singleton
-			want := reset()
+			var (
+				out = output{}
+				// reset log singleton
+				want = reset()
+			)
 
 			// handlerfunc that outputs to log
 			f := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

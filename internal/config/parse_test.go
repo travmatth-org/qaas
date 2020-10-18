@@ -11,8 +11,10 @@ type simple struct {
 }
 
 func TestParseOverridesFlat(t *testing.T) {
-	s := simple{}
-	m := map[string]string{"B": "CLI_B"}
+	var (
+		s = simple{}
+		m = map[string]string{"B": "CLI_B"}
+	)
 	os.Setenv("QAAS_A", "5")
 	os.Setenv("QAAS_B", "ENV_B")
 	defer os.Unsetenv("A")
@@ -28,18 +30,20 @@ func TestParseOverridesFlat(t *testing.T) {
 }
 
 type complex struct {
-	A int    `cli:"A" env:"A"`
-	B string `cli:"B" env:"B"`
+	A      int    `cli:"A" env:"A"`
+	B      string `cli:"B" env:"B"`
 	Simple struct {
 		C int    `cli:"C" env:"C"`
 		D string `cli:"D" env:"D"`
-		E int64 `cli:"E" env:"E"`
+		E int64  `cli:"E" env:"E"`
 	}
 }
 
 func TestParseOverridesNested(t *testing.T) {
-	s := complex{}
-	m := map[string]string{"C": "10"}
+	var (
+		s = complex{}
+		m = map[string]string{"C": "10"}
+	)
 	os.Setenv("QAAS_A", "5")
 	os.Setenv("QAAS_B", "ENV_B")
 	os.Setenv("QAAS_C", "5")
