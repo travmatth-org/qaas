@@ -24,6 +24,7 @@ services:
       - dynamodb-local
   dynamodb-local:
     image: amazon/dynamodb-local
+    command: "-jar DynamoDBLocal.jar -inMemory -delayTransientStatuses"
     container_name: dynamodb-local
     ports:
       - "8000:8000"
