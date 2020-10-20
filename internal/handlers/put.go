@@ -21,6 +21,7 @@ func (h *Handler) put(reader io.Reader) *types.QuoteRes {
 	} else if err := clean.Quote(quote); err != nil {
 		return res.WithErr(err)
 	}
+	quote.GenerateID()
 	author, topics := types.RecordsFromQuote(quote)
 	err := h.api.Put(
 		h.api.PutWithQuote(quote),

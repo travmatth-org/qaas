@@ -1,6 +1,9 @@
 package types
 
 import (
+	"crypto/sha1"
+	"encoding/hex"
+
 	"github.com/google/uuid"
 )
 
@@ -21,6 +24,13 @@ func NewQuote() *Quote {
 func (q *Quote) NewID() *Quote {
 	q.ID = uuid.New().String()
 	return q
+}
+
+// GenerateID inserts an ID = SHA1(Author+Text) into the Quote
+func (q *Quote) GenerateID() {
+	h := sha1.New()
+	h.Write([]byte(q.Author + q.Text))
+	q.ID = hex.EncodeToString(h.Sum(nil))
 }
 
 // WithID inserts the given ID into a Quote

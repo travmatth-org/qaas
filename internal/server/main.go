@@ -45,7 +45,8 @@ func Main() int {
 	defer fs.CloseAll()
 
 	// Create Server
-	s, err := New(c, WithHandlers(h.RouteMap(), config.IsProd(c)))
+	homeEndpoints := false
+	s, err := New(c, WithHandlers(h.RouteMap(homeEndpoints), config.IsProd(c)))
 	if err != nil {
 		logger.Error().Err(err).Msg("Error initializing Server")
 		return 1

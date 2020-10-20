@@ -24,13 +24,17 @@ type Handler struct {
 type Opt func(h *Handler) (*Handler, error)
 
 // RouteMap returns a map linking endpoint endpoint names to their handler
-func (h *Handler) RouteMap() map[string]http.HandlerFunc {
-	return map[string]http.HandlerFunc{
-		"/":       Static(h.fs.Use("index")),
+func (h *Handler) RouteMap(home bool) map[string]http.HandlerFunc {
+	routes := map[string]http.HandlerFunc{
 		"/get":    h.Get,
 		"/put":    h.Put,
 		"/random": h.Random,
-		"/404":    Static(h.fs.Use("404"))}
+	}
+	if home {
+		routes["/"] = Static(h.fs.Use("index"))
+		routes["/404"] = Static(h.fs.Use("404"))
+	}
+	return routes
 }
 
 // New constructs and returns a Handler struct with the specified opts
