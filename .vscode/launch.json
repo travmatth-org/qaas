@@ -25,7 +25,7 @@
             "args": [
                 "--env", "DEVELOPMENT",
                 "--ip", "127.0.0.1",
-                "--port", ":8080",
+                "--port", ":8888",
                 "--static", "${workspaceFolder}/web/www/static"
             ]
         },
@@ -41,7 +41,7 @@
             "args": [
                 "--env", "DEVELOPMENT",
                 "--ip", "127.0.0.1",
-                "--port", ":8080",
+                "--port", ":8888",
                 "--static", "${workspaceFolder}/web/www/static",
             ]
         }

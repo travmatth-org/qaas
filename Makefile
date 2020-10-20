@@ -48,14 +48,14 @@ run: build.noopt
 	@QAAS_CONFIG=${CURDIR}/configs/httpd.yml ./$(APPLICATION) \
 		--env "DEVELOPMENT" \
 		--ip "127.0.0.1" \
-		--port ":8080" \
+		--port ":8888" \
 		--static "${CURDIR}/web/www/static"
 
 run.db: build.db.main
 	@QAAS_CONFIG=${CURDIR}/configs/httpd.yml ./$(APPLICATION) \
 		--env "DEVELOPMENT" \
 		--ip "127.0.0.1" \
-		--port ":8080" \
+		--port ":8888" \
 		--static "${CURDIR}/web/www/static"
 
 get: $(MAIN)
@@ -89,6 +89,17 @@ docker.push.test:
 
 docker.push.dev:
 	@docker push travmatth/amazonlinux-golang-dev:latest
+
+# front-end commands
+
+web.start:
+	@(MAKE) start -C web
+
+web.compile:
+	@(MAKE) compile -C web
+
+web.test:
+	@(MAKE) test -C web
 
 # generate, view test coverage
 

@@ -7,7 +7,7 @@ services:
       context: ../../
       dockerfile: deploy/docker/dev.dockerfile
     ports:
-      - "8080:8080"
+      - "8888:8888"
       - "2345:2345"
     cap_add:
       - "SYS_PTRACE"
