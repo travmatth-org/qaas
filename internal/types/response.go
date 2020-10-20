@@ -2,7 +2,6 @@ package types
 
 import (
 	"encoding/json"
-	"io"
 )
 
 // QuoteRes forms the json response containing a quote
@@ -131,13 +130,6 @@ type GetBatch struct {
 	Start *Record
 }
 
-// ValidateRequestFrom decodes and validates the client batch get request
-func ValidateRequestFrom(reader io.Reader) (*GetBatch, error) {
-	var get GetBatch
-	if err := json.NewDecoder(reader).Decode(&get); err != nil {
-		return nil, err
-	} else if err = ValidateStruct(&get); err != nil {
-		return nil, err
-	}
-	return &get, nil
+func NewGetBatch() *GetBatch {
+	return &GetBatch{}
 }

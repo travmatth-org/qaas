@@ -12,39 +12,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/NYTimes/gziphandler"
-	"github.com/aws/aws-xray-sdk-go/xray"
 	"github.com/coreos/go-systemd/v22/activation"
 	"github.com/coreos/go-systemd/v22/daemon"
-	"github.com/justinas/alice"
-	"github.com/rs/zerolog/hlog"
 	"github.com/travmatth-org/qaas/internal/config"
-	"github.com/travmatth-org/qaas/internal/handlers"
 	"github.com/travmatth-org/qaas/internal/logger"
-	"github.com/travmatth-org/qaas/internal/middleware"
 )
-
-// Route composes endpoints by wrapping destination handler with handler
-// pipeline providing tracing with aws x-ray, injecting logging middleware
-// with request details into the context, and error recovery middleware,
-// and gzipping the response
-func (s *Server) Route(h http.HandlerFunc, isProd bool) http.HandlerFunc {
-	handler := alice.New(
-		handlers.Recover,
-		hlog.NewHandler(*logger.GetLogger()),
-		hlog.RequestIDHandler("req_id", "Request-Id"),
-		hlog.RemoteAddrHandler("ip"),
-		hlog.RequestHandler("dest"),
-		hlog.RefererHandler("referer"),
-		gziphandler.GzipHandler,
-		middleware.Log,
-	).ThenFunc(h)
-	if isProd {
-		namer := xray.NewFixedSegmentNamer("qaas-httpd")
-		return xray.Handler(namer, handler).ServeHTTP
-	}
-	return handler.ServeHTTP
-}
 
 // OpenListener returns a listener for the server to receive traffic on, or err
 // Will prefer using a systemd activated socket if `LISTEN_PID` defined in env

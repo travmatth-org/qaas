@@ -52,7 +52,7 @@ func TestNew(t *testing.T) {
 	}
 }
 
-func TestWithConfigFile(t *testing.T) {
+func TestWithFile(t *testing.T) {
 	var (
 		env        = "QAAS_CONFIG"
 		location   = "/etc/qaas/httpd.yml"
@@ -65,17 +65,17 @@ func TestWithConfigFile(t *testing.T) {
 	os.Setenv(env, location)
 	defer os.Unsetenv(env)
 
-	c, err := WithConfigFile(fileSystem.Open)(&Config{})
+	c, err := WithFile(fileSystem.Open)(&Config{})
 	if err != nil || c.Env != Production {
 		t.Fatalf("Error unmarshaling file to config struct")
 	}
 }
 
-func TestWithUpdates(t *testing.T) {
+func TestUpdate(t *testing.T) {
 	os.Setenv("QAAS_ENV", "DEVELOPMENT")
 	defer os.Unsetenv("QAAS_ENV")
 	c := &Config{}
-	if c, err := WithUpdates([]string{"--static", "foo"})(c); err != nil {
+	if c, err := Update([]string{"--static", "foo"})(c); err != nil {
 		t.Fatalf("Error overriding values in config struct: %s", err)
 	} else if c.Env != Development || c.Net.Static != "foo" {
 		t.Fatalf("Error: Overriding values in config struct failed")

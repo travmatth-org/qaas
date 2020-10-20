@@ -7,13 +7,13 @@ require (
 	github.com/aws/aws-sdk-go v1.34.31
 	github.com/aws/aws-xray-sdk-go v1.1.0
 	github.com/brianvoe/gofakeit/v5 v5.9.3
-	github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf
 	github.com/coreos/go-systemd/v22 v22.1.0
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/google/uuid v1.1.2
 	github.com/gorilla/mux v1.8.0
 	github.com/justinas/alice v1.2.0
 	github.com/kr/text v0.2.0 // indirect
+	github.com/microcosm-cc/bluemonday v1.0.4
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
 	github.com/rs/zerolog v1.20.0
 	github.com/spf13/afero v1.4.0

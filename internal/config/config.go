@@ -92,10 +92,10 @@ func choosePath() (string, error) {
 	return path, err
 }
 
-// WithConfigFile locates and parses the config file into the Config struct.
+// WithFile locates and parses the config file into the Config struct.
 // Prefers file path given by `QAAS_CONFIG` environment variable, defaults to
 // /etc/qaas/httpd.yml
-func WithConfigFile(open func(string) (types.AFSFile, error)) Opts {
+func WithFile(open func(string) (types.AFSFile, error)) Opts {
 	return func(c *Config) (*Config, error) {
 		path, err := choosePath()
 		if err != nil {
@@ -117,9 +117,9 @@ func WithConfigFile(open func(string) (types.AFSFile, error)) Opts {
 	}
 }
 
-// WithUpdates accepts the os.Args array and overrides the Config,
+// Update accepts the os.Args array and overrides the Config,
 // first with available env vars then with cli options
-func WithUpdates(options []string) Opts {
+func Update(options []string) Opts {
 	return func(c *Config) (*Config, error) {
 		n := len(options)
 		if n%2 != 0 {

@@ -23,11 +23,20 @@ const (
 type AFS struct {
 	client *types.AFS
 	files  map[string]types.AFSFile
+	static map[string]string
 }
 
 // New returns a new FS
 func New() *AFS {
-	return &AFS{nil, make(map[string]types.AFSFile)}
+	return &AFS{nil, make(map[string]types.AFSFile), make(map[string]string)}
+}
+
+// WithStatic loads the given static assets into the server
+func (afs *AFS) WithStatic(static string) (*AFS, error) {
+	if err := afs.LoadAssets(static); err != nil {
+		return nil, err
+	}
+	return afs, nil
 }
 
 // WithMemFs creates an underlying in memory filesystem

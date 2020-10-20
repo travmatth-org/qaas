@@ -18,8 +18,8 @@ func start() int {
 	afs := afs.New().WithCachedFs()
 	// Load config options
 	c, err := config.New(
-		config.WithConfigFile(afs.Open),
-		config.WithUpdates(os.Args[1:]))
+		config.WithFile(afs.Open),
+		config.Update(os.Args[1:]))
 	if err != nil {
 		logger.Error().Msg("Error creating config")
 		return 1
@@ -27,11 +27,10 @@ func start() int {
 
 	// Create API
 	a, err := api.New(
-		api.WithRegion(c.AWS.Region),
 		api.WithSession,
 		api.WithEC2(config.IsProd(c)),
 		api.WithXray(config.IsProd(c)),
-		api.WithNewDDB(c))
+		api.WithDynamoDBService(c))
 	if err != nil {
 		logger.Error().Msg("Error configuring API")
 		return 1
@@ -40,12 +39,8 @@ func start() int {
 	var (
 		n       = gofakeit.Name()
 		t       = []string{gofakeit.Word(), gofakeit.Word()}
-		ids     = []string{}
 		authors = []string{}
 	)
-
-	// Generate & Put new quotes
-	var ()
 
 	for i := 0; i < 10; i++ {
 		var (
@@ -60,28 +55,16 @@ func start() int {
 			topics = append(topics, topic)
 		}
 
-		ids = append(ids, quote.ID)
 		authors = append(authors, author.Name)
 		// records = append(records, author, topics...)
-		if err := a.PutNewQuote(quote, author, topics); err != nil {
-			fmt.Println(err)
-			return 1
-		}
-	}
-
-	for _, id := range ids {
-		in := a.DDB.NewGetQuoteInputByID(id)
-		out, err := a.DDB.GetObject(in)
+		err := a.Put(
+			a.PutWithQuote(quote),
+			a.PutWithAuthor(author),
+			a.PutWithTopics(topics))
 		if err != nil {
 			fmt.Println(err)
 			return 1
 		}
-		q, err := a.DDB.QuoteFromObject(out)
-		if err != nil {
-			fmt.Println(err)
-			return 1
-		}
-		fmt.Printf("%+v\n", q)
 	}
 
 	for _, topic := range t {
@@ -89,7 +72,7 @@ func start() int {
 			last *types.Record = nil
 		)
 		for {
-			res := a.GetQuotesByTopic(topic, last)
+			res := a.Get(a.Table.Topic, topic, last)
 			if res.Err != nil {
 				fmt.Println(res.Err)
 				return 1
@@ -108,7 +91,7 @@ func start() int {
 			last *types.Record = nil
 		)
 		for {
-			res := a.GetQuotesByAuthor(author, last)
+			res := a.Get(a.Table.Author, author, last)
 			if res.Err != nil {
 				fmt.Println(res.Err)
 				return 1
@@ -119,7 +102,7 @@ func start() int {
 			last = res.Next
 		}
 	}
-	quote := a.GetRandomQuote()
+	quote := a.Random()
 	fmt.Printf("%+v", quote)
 	return 0
 }

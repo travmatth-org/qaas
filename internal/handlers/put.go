@@ -1,39 +1,43 @@
 package handlers
 
 import (
+	"encoding/json"
+	"io"
 	"net/http"
 
-	"github.com/travmatth-org/qaas/internal/api"
+	"github.com/travmatth-org/qaas/internal/clean"
 	"github.com/travmatth-org/qaas/internal/logger"
 	"github.com/travmatth-org/qaas/internal/types"
 )
 
-// Put reads & validates the given *Quote struct, before saving to DynamoDB
-func Put(a *api.API) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		var (
-			q            = types.NewQuoteRes()
-			quote        = types.NewQuote()
-			author       = types.NewRecord()
-			topics       = []*types.Record{}
-			err    error = nil
-		)
+func (h *Handler) put(reader io.Reader) *types.QuoteRes {
+	var (
+		quote = types.NewQuote()
+		res   = types.NewQuoteRes()
+	)
 
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		quote, err = types.ValidateQuoteFrom(r.Body)
-		if err != nil {
-			goto FAIL
-		}
-		author, topics = types.RecordsFromQuote(quote)
-		err = a.PutNewQuote(quote, author, topics)
-		q.WithQuote(quote).WithErr(err)
-		if err != nil {
-			goto FAIL
-		}
-		w.Write(q.JSON())
-		logger.InfoReq(r).Object("quote", q).Msg("Saved Quote")
-		return
-	FAIL:
-		http.Error(w, q.Error(), http.StatusBadRequest)
+	if err := json.NewDecoder(reader).Decode(&quote); err != nil {
+		return res.WithErr(err)
+	} else if err := clean.Quote(quote); err != nil {
+		return res.WithErr(err)
 	}
+	author, topics := types.RecordsFromQuote(quote)
+	err := h.api.Put(
+		h.api.PutWithQuote(quote),
+		h.api.PutWithAuthor(author),
+		h.api.PutWithTopics(topics))
+	return res.WithQuote(quote).WithErr(err)
+}
+
+// Put reads & validates the given *Quote struct, before saving to DynamoDB
+func (h *Handler) Put(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	defer r.Body.Close()
+	body := h.put(r.Body)
+	wr, err := w.Write(body.JSON())
+	logger.InfoReq(r).
+		Int("bytes", wr).
+		Err(err).
+		Object("quote", body).
+		Msg("Saved Quote")
 }

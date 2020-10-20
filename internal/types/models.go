@@ -1,9 +1,6 @@
 package types
 
 import (
-	"encoding/json"
-	"io"
-
 	"github.com/google/uuid"
 )
 
@@ -18,17 +15,6 @@ type Quote struct {
 // NewQuote returns a new Quote
 func NewQuote() *Quote {
 	return &Quote{}
-}
-
-// ValidateQuoteFrom creates a new quote from the given reader
-func ValidateQuoteFrom(reader io.Reader) (*Quote, error) {
-	var quote Quote
-	if err := json.NewDecoder(reader).Decode(&quote); err != nil {
-		return nil, err
-	} else if err = ValidateStruct(&quote); err != nil {
-		return nil, err
-	}
-	return &quote, nil
 }
 
 // NewID inserts a new UUID into a Quote
