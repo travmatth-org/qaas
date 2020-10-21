@@ -1,0 +1,19 @@
+$base-color: #165DA6;
+$accent-color: #FF9F10;
+$dark-gray: #424242;
+$light-gray: #fafafa;
+
+body {
+	background: linear-gradient($base-color 60%, $light-gray 40%);
+	background-repeat: no-repeat;
+	background-attachment: fixed;
+	color: $dark-gray
+}
+
+.divider {
+	width: 80%;
+	height: 1px;
+	margin: 10px auto;
+	background: $accent-color;
+	border-bottom: 1px solid $accent-color;
+}
