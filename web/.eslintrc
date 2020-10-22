@@ -2,6 +2,23 @@
 	"parser": "babel-eslint",
 	"extends": ["airbnb"],
 	"rules": {
-		"max-len": [1, 80, 2, {"ignoreComments": false}]
+		"max-len": [1, 80, 2, {"ignoreComments": false}],
+		"import/extensions": ["error", "ignorePackages", {
+			"js": "never",
+			"ts": "never"
+		}]
+	},
+	"env": {
+		"browser": true
+	},
+	"settings": {
+		"import/resolver": {
+			"webpack": {
+				"config": "config/webpack.config.js"
+			},
+			"node": {
+				"extensions": [".js", ".jsx", ".ts", ".tsx"]
+			}
+		}
 	}
 }
