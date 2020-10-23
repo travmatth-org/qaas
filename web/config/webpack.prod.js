@@ -2,6 +2,7 @@ const { merge } = require('webpack-merge');
 const common = require("./webpack.config.js")
 const Dotenv = require('dotenv-webpack');
 const { DefinePlugin } = require("webpack")
+const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 
 module.exports = merge(common, {
 	mode: "production",
@@ -17,10 +18,10 @@ module.exports = merge(common, {
 		new Dotenv({
 			path: "./.env.prod"
 		}),
-		// new MiniCssExtractPlugin({
-		// 	filename: '[name].[hash].css',
-		// 	chunkFilename: '[name].[hash].css'
-		// })
+		new MiniCssExtractPlugin({
+			filename: '[name].[hash].css',
+			chunkFilename: '[name].[hash].css'
+		})
 	],
 
 	// https://webpack.js.org/configuration/optimization/

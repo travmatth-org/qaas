@@ -1,12 +1,20 @@
 {
 	"compilerOptions": {
-	  "outDir": "./dist/",
-	  "sourceMap": true,
-	  "noImplicitAny": true,
-	  "module": "es6",
-	  "target": "es5",
-	  "allowJs": true,
-	  "importsNotUsedAsValues": "preserve",
-	  "moduleResolution": "node",
+		"noImplicitThis": true,
+		// "module": "commonjs",
+
+		"outDir": "./dist/",
+		"sourceMap": true,
+		"noImplicitAny": true,
+		"module": "es2015",
+		"target": "es5",
+		"allowJs": true,
+		"importsNotUsedAsValues": "preserve",
+		"moduleResolution": "node",
+		"strict": true,
+		"experimentalDecorators": true,
+		"lib": ["dom", "es5", "es2015"],
+		"emitDecoratorMetadata": true,
+		"allowSyntheticDefaultImports": true,
 	}
 }

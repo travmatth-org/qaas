@@ -1,11 +1,13 @@
 {
 	"parser": "babel-eslint",
-	"extends": ["airbnb"],
+	"extends": ["airbnb/base"],
+	"ignorePatterns": ["**/*.d.ts"],
 	"rules": {
 		"max-len": [1, 80, 2, {"ignoreComments": false}],
 		"import/extensions": ["error", "ignorePackages", {
 			"js": "never",
-			"ts": "never"
+			"ts": "never",
+			"vue": "never"
 		}]
 	},
 	"env": {
@@ -17,7 +19,7 @@
 				"config": "config/webpack.config.js"
 			},
 			"node": {
-				"extensions": [".js", ".jsx", ".ts", ".tsx"]
+				"extensions": [".js", ".ts", ".vue"]
 			}
 		}
 	}
